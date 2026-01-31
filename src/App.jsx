@@ -1,15 +1,34 @@
-import PhaserTest from './components/PhaserTest'
+// import PhaserTest from './components/PhaserTest'
 
-  function App() {
-    return (
-      <div>
-        <h1>Test</h1>
-        <PhaserTest />
-      </div>
-    )
-  }
+//   function App() {
+//     return (
+//       <div>
+//         <h1>Test</h1>
+//         <PhaserTest />
+//       </div>
+//     )
+//   }
 
-  export default App
+//   export default App
+
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Homepage from "./pages/Homepage";
+import Play from "./pages/Play";
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Homepage />} />
+        <Route path="/play" element={<Play />} />
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
+
+
 // import { useState } from 'react'
 // import reactLogo from './assets/react.svg'
 // import viteLogo from '/vite.svg'

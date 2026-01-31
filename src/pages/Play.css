@@ -1,0 +1,74 @@
+.play {
+  min-height: 100vh;
+  min-width: 100vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: "Century Gothic", sans-serif;
+  background-color: #3C9858;
+  color: #E8ECEF;
+}
+
+.opponent {
+  top: -33px;
+  left: 20px;
+  position: absolute;
+   font-size: 40px;
+}
+
+.you {
+  top: -33px;
+  right: 20px;
+  position: absolute;
+   font-size: 40px;
+}
+
+.opponentScore {
+  top: 0px;          
+  left: 265px;            
+  position: absolute;
+  font-size: 50px;
+}
+
+.yourScore {
+  top: 0px;
+  right: 130px;
+  position: absolute;
+  font-size: 50px;
+}
+
+.finishGameButton {
+  bottom: 20px;
+  right: 20px;
+  position: absolute;
+  padding: 16px 36px;
+  font-size: 35px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background-color: #565757;
+}
+
+.resultMessage {
+  position: absolute;
+  top: 50%;         
+  left: 50%;         
+  transform: translate(-50%, -50%);
+  padding: 16px 36px;
+  font-size: 80px;
+  border-radius: 8px;
+  background-color: #E11D49;
+}
+
+.imageContainer {
+  top: 75px;
+  bottom: 115px;
+  left: 0px; /* might want to change these? */
+  right: 0px;
+  position: absolute;
+  background-color: #E11D49; /* placeholder so you can see the area */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
