@@ -1,6 +1,7 @@
 import "./Play.css";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import FoosballTable from "../components/FoosballTable";
 
 export default function Play() {
   const [opponentScore, setOpponentScore] = useState(0);
@@ -36,7 +37,9 @@ export default function Play() {
       <div className="opponentScore" onClick={incrementOpponentScore}>
         {opponentScore}
       </div>
-      <div className="imageContainer"></div>
+      <div className="imageContainer">
+        <FoosballTable/>
+      </div>
       <p className="you">You</p>
       <div className="yourScore" onClick={incrementYourScore}>
         {yourScore}

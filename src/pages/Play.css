@@ -67,8 +67,9 @@
   left: 0px; /* might want to change these? */
   right: 0px;
   position: absolute;
-  background-color: #E11D49; /* placeholder so you can see the area */
+  background-color: #202924; /* placeholder so you can see the area */
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow: hidden;
 }

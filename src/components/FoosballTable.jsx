@@ -1,0 +1,196 @@
+import { useEffect } from 'react'
+  import Phaser from 'phaser'
+  import './FoosballTable.css'
+
+  function FoosballTable() {
+    useEffect(() => {
+      const config = {
+        type: Phaser.AUTO,
+        width: 1400,
+        height: 700,
+        parent: 'foosball-table',
+        transparent: true,
+        scene: {
+          create: create,
+        }
+      }
+
+      function create() {
+
+        // dimensions for components in the table
+        const canvasWidth = this.scale.width
+        const canvasHeight = this.scale.height
+        const tableCenterX = canvasWidth / 2
+        const tableWidth = canvasWidth * 0.857
+        const tableHeight = canvasHeight * 0.714
+        const tableCenterY = canvasHeight / 2
+        const tableLeftEdge = tableCenterX - (tableWidth / 2)
+        const tableRightEdge = tableCenterX + (tableWidth / 2) 
+        const tableTopEdge = tableCenterY - (tableHeight / 2)
+        const tableBottomEdge = tableCenterY + (tableHeight / 2)
+        const canvasTop = 0
+        const betweenCanvasAndTableTop = (canvasTop + tableTopEdge) / 2
+        const betweenCanvasAndTableBottom = (canvasHeight + tableBottomEdge) / 2
+        const numOfRods = 8
+        const rodSpacing = tableWidth / (numOfRods + 1)
+        const playerRods = [1,2,4,6]
+        const handleWidth = 30
+        const ballRadius = tableWidth * 0.01
+        const circleMarkerRadius = rodSpacing
+
+        // goal markings
+        const goalSectionsHeight = tableHeight / 9
+        const bigGoalHeight = goalSectionsHeight * 5
+        const bigGoalWidth = rodSpacing + (rodSpacing * 3 / 7)
+        const smallGoalHeight = goalSectionsHeight * 3
+        const smallGoalWidth = rodSpacing
+        const semiCircleWidth = rodSpacing / 3
+
+        // colours
+        const tableColour = 0x2d8659
+        const tableBorder = 0x000000
+        const tableMarkings = 0xffffff
+        const ballColour = 0xf0eceb
+        const handleColour = 0x000000
+        const playerColour = 0xff0000
+        const opponentColour = 0xffff00
+
+        // each rods football players
+        const football_players = {
+          1: {
+            type: 'goalkeeper',
+            positions: [11],
+            colour: playerColour,
+          },
+          2: {
+            type: '3-players',
+            positions: [3, 11, 19],
+            colour: playerColour
+          },
+          3: {
+            type: '3-players',
+            positions: [3, 11, 19],
+            colour: opponentColour
+          },
+          4: {
+            type: '4-players',
+            positions: [3, 8, 14, 19],
+            colour: playerColour
+          },
+          5: {
+            type: '4-players',
+            positions: [3, 8, 14, 19],
+            colour: opponentColour
+          },
+          6: {
+            type: '3-players',
+            positions: [3, 11, 19],
+            colour: playerColour
+          },
+          7: {
+            type: '3-players',
+            positions: [3, 11, 19],
+            colour: opponentColour
+          },
+          8: {
+            type: 'goalkeeper',
+            positions: [11],
+            colour: opponentColour
+          },
+        }
+
+        // table 
+        this.add.rectangle(tableCenterX, tableCenterY, tableWidth, tableHeight, tableColour).setStrokeStyle(4, tableBorder)
+        
+        // markings on the table
+        this.add.circle(tableCenterX, tableCenterY, circleMarkerRadius).setStrokeStyle(2, tableMarkings).setFillStyle(tableColour)
+        // goal markings
+        this.add.rectangle(tableLeftEdge + (bigGoalWidth / 2), tableCenterY, bigGoalWidth, bigGoalHeight)
+        .setStrokeStyle(2, tableMarkings).setFillStyle(tableColour, 0)
+        this.add.rectangle(tableRightEdge - (bigGoalWidth / 2), tableCenterY, bigGoalWidth, bigGoalHeight)
+        .setStrokeStyle(2, tableMarkings).setFillStyle(tableColour, 0)
+        this.add.rectangle(tableLeftEdge + (smallGoalWidth / 2), tableCenterY, smallGoalWidth, smallGoalHeight)
+        .setStrokeStyle(2, tableMarkings).setFillStyle(tableColour, 0)
+        this.add.rectangle(tableRightEdge - (smallGoalWidth / 2), tableCenterY, smallGoalWidth, smallGoalHeight)
+        .setStrokeStyle(2, tableMarkings).setFillStyle(tableColour, 0)
+
+        const leftSemiCircle = this.add.graphics()
+        leftSemiCircle.lineStyle(2, tableMarkings)
+        leftSemiCircle.beginPath()
+        leftSemiCircle.arc(
+        tableLeftEdge + bigGoalWidth,
+        tableCenterY,
+        semiCircleWidth,
+        Phaser.Math.DegToRad(270),
+        Phaser.Math.DegToRad(90),
+        false
+        )
+        leftSemiCircle.strokePath()
+
+        const rightSemiCircle = this.add.graphics()
+        rightSemiCircle.lineStyle(2, tableMarkings)
+        rightSemiCircle.beginPath()
+        rightSemiCircle.arc(
+        tableRightEdge - bigGoalWidth,
+        tableCenterY,
+        semiCircleWidth,
+        Phaser.Math.DegToRad(90),
+        Phaser.Math.DegToRad(270),
+        false
+        )
+        rightSemiCircle.strokePath()
+
+        // redraw the table border 
+        this.add.rectangle(tableCenterX, tableCenterY, tableWidth, tableHeight).setStrokeStyle(4, tableBorder).setFillStyle(tableColour, 0)
+
+        // ball
+        this.add.circle(tableCenterX, tableCenterY, ballRadius, ballColour)
+
+        for (let i = 1; i <= numOfRods; i++) {
+          const rodX = tableLeftEdge + (rodSpacing * i)
+          const rodTopY = betweenCanvasAndTableTop
+          const rodBottomY = betweenCanvasAndTableBottom
+          this.add.line(0, 0, rodX, rodTopY, rodX, rodBottomY, 0xaaaaaa).setLineWidth(3).setOrigin(0,0) // rods
+          
+          // make the handles
+          if (playerRods.includes(i)) {
+            const handleHeight = canvasHeight - betweenCanvasAndTableBottom
+            const handleCenterY = (betweenCanvasAndTableBottom + canvasHeight) / 2
+            this.add.rectangle(rodX, handleCenterY, handleWidth, handleHeight, handleColour) // bottom handles
+          } 
+          else {
+            const handleHeight = betweenCanvasAndTableTop - canvasTop 
+            const handleCenterY = (canvasTop + betweenCanvasAndTableTop) / 2
+            this.add.rectangle(rodX, handleCenterY, handleWidth, handleHeight, handleColour) // top handles
+          }
+
+          // make the players
+          const rodHeight = tableHeight
+          const boxHeight = rodHeight / 21
+          const playerWidth = tableWidth * 0.01
+          const playerHeight = boxHeight * 1.3
+
+          const players = football_players[i]
+          players.positions.forEach(boxNum => {
+            const playerCenterY = tableTopEdge + (boxHeight * (boxNum - 0.5))
+            this.add.rectangle(rodX, playerCenterY, playerWidth, playerHeight, players.colour)
+          })
+
+        }
+    
+        // left goal 
+        this.add.rectangle(tableLeftEdge, tableCenterY, 20, tableHeight / 3, 0xffffff).setStrokeStyle(2, 0x000000)
+  
+        // right goal
+        this.add.rectangle(tableRightEdge, tableCenterY, 20, tableHeight / 3, 0xffffff).setStrokeStyle(2, 0x000000)
+      }
+
+      const game = new Phaser.Game(config)
+
+      return () => game.destroy(true)
+    }, [])
+
+    return <div id="foosball-table"></div>
+  }
+
+export default FoosballTable
