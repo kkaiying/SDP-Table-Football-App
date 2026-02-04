@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
-  import Phaser from 'phaser'
-  import './FoosballTable.css'
+import Phaser from 'phaser'
+import './FoosballTable.css'
+import { rodSliding } from './foosballControls'
+
 
   function FoosballTable() {
     useEffect(() => {
@@ -150,18 +152,19 @@ import { useEffect } from 'react'
           const rodX = tableLeftEdge + (rodSpacing * i)
           const rodTopY = betweenCanvasAndTableTop
           const rodBottomY = betweenCanvasAndTableBottom
-          this.add.line(0, 0, rodX, rodTopY, rodX, rodBottomY, 0xaaaaaa).setLineWidth(3).setOrigin(0,0) // rods
+          const rod = this.add.line(0, 0, rodX, rodTopY, rodX, rodBottomY, 0xaaaaaa).setLineWidth(3).setOrigin(0,0) 
           
           // make the handles
+          let handle
           if (playerRods.includes(i)) {
             const handleHeight = canvasHeight - betweenCanvasAndTableBottom
             const handleCenterY = (betweenCanvasAndTableBottom + canvasHeight) / 2
-            this.add.rectangle(rodX, handleCenterY, handleWidth, handleHeight, handleColour) // bottom handles
+            handle = this.add.rectangle(rodX, handleCenterY, handleWidth, handleHeight, handleColour) // bottom handles
           } 
           else {
             const handleHeight = betweenCanvasAndTableTop - canvasTop 
             const handleCenterY = (canvasTop + betweenCanvasAndTableTop) / 2
-            this.add.rectangle(rodX, handleCenterY, handleWidth, handleHeight, handleColour) // top handles
+            handle = this.add.rectangle(rodX, handleCenterY, handleWidth, handleHeight, handleColour) // top handles
           }
 
           // make the players
@@ -170,12 +173,21 @@ import { useEffect } from 'react'
           const playerWidth = tableWidth * 0.01
           const playerHeight = boxHeight * 1.3
 
-          const players = football_players[i]
-          players.positions.forEach(boxNum => {
+          const playerConfig = football_players[i]
+          const playerObjects = []
+          playerConfig.positions.forEach(boxNum => {
             const playerCenterY = tableTopEdge + (boxHeight * (boxNum - 0.5))
-            this.add.rectangle(rodX, playerCenterY, playerWidth, playerHeight, players.colour)
+            const player = this.add.rectangle(rodX, playerCenterY, playerWidth, playerHeight, playerConfig.colour)
+            playerObjects.push(player)
           })
 
+          const rodElements = [rod, handle, ...playerObjects]
+
+          const hitboxWidth = 50 // might change this to scale with canvas size too
+          const hitboxHeight = tableHeight
+          const rodHitbox = this.add.rectangle(rodX, tableCenterY, hitboxWidth, hitboxHeight, 0x000000, 0)
+          rodHitbox.setInteractive({ draggable: true, useHandCursor: true })
+          rodSliding(this, rodHitbox, rodElements, { tableTopEdge, tableBottomEdge, tableCenterY, playerHeight })
         }
     
         // left goal 
