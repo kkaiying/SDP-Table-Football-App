@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import Phaser from 'phaser'
 import './FoosballTable.css'
-import { rodSliding } from './foosballControls'
+import { rodSliding, kickRod } from './foosballControls'
 
 
   function FoosballTable() {
@@ -12,8 +12,13 @@ import { rodSliding } from './foosballControls'
         height: 700,
         parent: 'foosball-table',
         transparent: true,
+        input: {
+          mouse: {
+            wheel: true
+          }
+        },
         scene: {
-          create: create,
+          create
         }
       }
 
@@ -178,6 +183,11 @@ import { rodSliding } from './foosballControls'
           playerConfig.positions.forEach(boxNum => {
             const playerCenterY = tableTopEdge + (boxHeight * (boxNum - 0.5))
             const player = this.add.rectangle(rodX, playerCenterY, playerWidth, playerHeight, playerConfig.colour)
+            // store original dimensions for later
+            player.originalWidth = playerWidth
+            player.originalHeight = playerHeight
+            player.homeX = rodX
+            player.isKicking = false
             playerObjects.push(player)
           })
 
@@ -187,7 +197,35 @@ import { rodSliding } from './foosballControls'
           const hitboxHeight = tableHeight
           const rodHitbox = this.add.rectangle(rodX, tableCenterY, hitboxWidth, hitboxHeight, 0x000000, 0)
           rodHitbox.setInteractive({ draggable: true, useHandCursor: true })
-          rodSliding(this, rodHitbox, rodElements, { tableTopEdge, tableBottomEdge, tableCenterY, playerHeight })
+          rodSliding(this, rodHitbox, rodElements, {tableTopEdge, tableBottomEdge, tableCenterY, playerHeight})
+          // per-rod scroll state
+          rodHitbox.scrollCount = 0
+          rodHitbox.scrollTimer = null
+
+          rodHitbox.on('wheel', (pointer, dx, dy) => {
+            rodHitbox.scrollCount += 1
+
+            // reset debounce timer
+            if (rodHitbox.scrollTimer) {
+              rodHitbox.scrollTimer.remove(false)
+            }
+
+            rodHitbox.scrollTimer = this.time.delayedCall(120, () => {
+              let level
+
+              if (rodHitbox.scrollCount <= 2) level = 1
+              else if (rodHitbox.scrollCount <= 4) level = 2
+              else level = 3
+
+              kickRod(this, playerObjects, level)
+
+              rodHitbox.scrollCount = 0
+              rodHitbox.scrollTimer = null
+
+              console.log('KICK', level)
+
+            })
+          })
         }
     
         // left goal 

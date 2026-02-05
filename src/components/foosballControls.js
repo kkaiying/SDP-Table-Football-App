@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 export function rodSliding(scene, rodHitbox, rodElements, constraints) {
     const { tableTopEdge, tableBottomEdge, playerHeight } = constraints
 
@@ -30,4 +32,35 @@ export function rodSliding(scene, rodHitbox, rodElements, constraints) {
             element.y = rodHitbox.y + offsets[index]
         })
     })
+
+}
+
+export function kickRod(scene, players, level = 1) {
+  const powerByLevel = {
+    1: { widthMultiplier: 1.2, kickDistance: 6, duration: 110 },
+    2: { widthMultiplier: 1.4, kickDistance: 12, duration: 90 },
+    3: { widthMultiplier: 1.7, kickDistance: 20, duration: 70 }
+  }
+
+  const power = powerByLevel[level] || powerByLevel[1]
+
+  players.forEach(player => {
+    if (player.isKicking) return
+    player.isKicking = true
+
+    scene.tweens.add({
+      targets: player,
+      displayWidth: player.originalHeight * power.widthMultiplier,
+      x: player.homeX + power.kickDistance,
+      duration: power.duration,
+      ease: 'Power2',
+      yoyo: true,
+      hold: 60,
+      onComplete: () => {
+        player.x = player.homeX
+        player.displayWidth = player.originalWidth
+        player.isKicking = false
+      }
+    })
+  })
 }
