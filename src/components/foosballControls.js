@@ -35,7 +35,7 @@ export function rodSliding(scene, rodHitbox, rodElements, constraints) {
 
 }
 
-export function kickRod(scene, players, level = 1) {
+export function kickRod(scene, players, level = 1, direction = 'right') {
   const powerByLevel = {
     1: { widthMultiplier: 1.2, kickDistance: 6, duration: 110 },
     2: { widthMultiplier: 1.4, kickDistance: 12, duration: 90 },
@@ -43,6 +43,7 @@ export function kickRod(scene, players, level = 1) {
   }
 
   const power = powerByLevel[level] || powerByLevel[1]
+  const kickSign = direction === 'right' ? 1 : -1
 
   players.forEach(player => {
     if (player.isKicking) return
@@ -51,7 +52,7 @@ export function kickRod(scene, players, level = 1) {
     scene.tweens.add({
       targets: player,
       displayWidth: player.originalHeight * power.widthMultiplier,
-      x: player.homeX + power.kickDistance,
+      x: player.homeX + (kickSign * power.kickDistance),
       duration: power.duration,
       ease: 'Power2',
       yoyo: true,

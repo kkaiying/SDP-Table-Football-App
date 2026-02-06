@@ -205,7 +205,9 @@ import { rodSliding, kickRod } from './foosballControls'
           rodHitbox.on('wheel', (pointer, dx, dy) => {
             rodHitbox.scrollCount += 1
 
-            // reset debounce timer
+            // store last scroll direction
+            rodHitbox.lastScrollDirection = dy < 0 ? 'right' : 'left'
+
             if (rodHitbox.scrollTimer) {
               rodHitbox.scrollTimer.remove(false)
             }
@@ -217,15 +219,13 @@ import { rodSliding, kickRod } from './foosballControls'
               else if (rodHitbox.scrollCount <= 4) level = 2
               else level = 3
 
-              kickRod(this, playerObjects, level)
+              kickRod(this, playerObjects, level, rodHitbox.lastScrollDirection)
 
               rodHitbox.scrollCount = 0
               rodHitbox.scrollTimer = null
-
-              console.log('KICK', level)
-
             })
           })
+
         }
     
         // left goal 
