@@ -1,6 +1,12 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import Play from "./Play";
+
+jest.mock("../components/FoosballTable", () => ({
+  __esModule: true,
+  default: () => <div data-testid="foosball-table-mock" />,
+}));
+
+import Play from "../pages/Play";
 
 describe("Play component", () => {
   test("displays 'You win!' when your score is higher than the opponent score", () => {
