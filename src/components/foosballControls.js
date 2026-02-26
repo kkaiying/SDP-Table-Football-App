@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { sendKickCommand, sendSlideCommand } from '../utils/websocket'
 
 export function rodSliding(scene, rodHitbox, rodElements, constraints) {
-    const { tableTopEdge, tableBottomEdge, playerHeight } = constraints
+    const { tableTopEdge, tableBottomEdge, playerHeight, rodId } = constraints
 
     scene.input.setDraggable(rodHitbox)
 
@@ -19,7 +20,7 @@ export function rodSliding(scene, rodHitbox, rodElements, constraints) {
     const topDistance = rodHitbox.y - topPlayerY
     const bottomDistance = bottomPlayerY - rodHitbox.y
 
-    // for goalkeeper add extra padding to prevent handle from leaving table
+    // extra padding for goalkeeper to prevent handle from leaving table
     const padding = isGoalkeeper ? 205 : (playerHeight / 2)  
 
     const minY = tableTopEdge + topDistance + padding
@@ -31,11 +32,13 @@ export function rodSliding(scene, rodHitbox, rodElements, constraints) {
         rodElements.forEach((element, index) => {
             element.y = rodHitbox.y + offsets[index]
         })
+
+        sendSlideCommand(rodId, rodHitbox.y, 0)
     })
 
 }
 
-export function kickRod(scene, players, level = 1, direction = 'right') {
+export function kickRod(scene, players, level = 1, direction = 'right', rodId) {
   const powerByLevel = {
     1: { widthMultiplier: 1.2, kickDistance: 6, duration: 110 },
     2: { widthMultiplier: 1.4, kickDistance: 12, duration: 90 },
@@ -48,6 +51,8 @@ export function kickRod(scene, players, level = 1, direction = 'right') {
   players.forEach(player => {
     if (player.isKicking) return
     player.isKicking = true
+
+    sendKickCommand(rodId, level, direction)
 
     scene.tweens.add({
       targets: player,

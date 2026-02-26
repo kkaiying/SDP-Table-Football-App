@@ -2,10 +2,12 @@ import { useEffect } from 'react'
 import Phaser from 'phaser'
 import './FoosballTable.css'
 import { rodSliding, kickRod } from './foosballControls'
+import { connectToServer } from '../utils/websocket'
 
 
   function FoosballTable() {
     useEffect(() => {
+      const ws = connectToServer()
       const config = {
         type: Phaser.AUTO,
         width: 1400,
@@ -197,7 +199,12 @@ import { rodSliding, kickRod } from './foosballControls'
           const hitboxHeight = tableHeight
           const rodHitbox = this.add.rectangle(rodX, tableCenterY, hitboxWidth, hitboxHeight, 0x000000, 0)
           rodHitbox.setInteractive({ draggable: true, useHandCursor: true })
-          rodSliding(this, rodHitbox, rodElements, {tableTopEdge, tableBottomEdge, tableCenterY, playerHeight})
+          rodSliding(this, rodHitbox, rodElements, {
+            tableTopEdge, 
+            tableBottomEdge, 
+            tableCenterY, 
+            playerHeight,
+            rodId: i})
           // per-rod scroll state
           rodHitbox.scrollCount = 0
           rodHitbox.scrollTimer = null
@@ -219,7 +226,7 @@ import { rodSliding, kickRod } from './foosballControls'
               else if (rodHitbox.scrollCount <= 4) level = 2
               else level = 3
 
-              kickRod(this, playerObjects, level, rodHitbox.lastScrollDirection)
+              kickRod(this, playerObjects, level, rodHitbox.lastScrollDirection, i)
 
               rodHitbox.scrollCount = 0
               rodHitbox.scrollTimer = null
@@ -237,7 +244,10 @@ import { rodSliding, kickRod } from './foosballControls'
 
       const game = new Phaser.Game(config)
 
-      return () => game.destroy(true)
+      return () => {
+        game.destroy(true)
+        if (ws) ws.close()
+      }
     }, [])
 
     return <div id="foosball-table"></div>
