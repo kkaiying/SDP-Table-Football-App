@@ -36,6 +36,8 @@ export function rodSliding(scene, rodHitbox, rodElements, constraints) {
 }
 
 export function kickRod(scene, players, level = 1, direction = 'right') {
+  
+  // determine how much player "sticks out", how far sideways player moves, how fast kick happens
   const powerByLevel = {
     1: { widthMultiplier: 1.2, kickDistance: 6, duration: 110 },
     2: { widthMultiplier: 1.4, kickDistance: 12, duration: 90 },
@@ -43,23 +45,24 @@ export function kickRod(scene, players, level = 1, direction = 'right') {
   }
 
   const power = powerByLevel[level] || powerByLevel[1]
-  const kickSign = direction === 'right' ? 1 : -1
+  const kickSign = direction === 'right' ? 1 : -1 // right = +1, left = -1
 
   players.forEach(player => {
     if (player.isKicking) return
     player.isKicking = true
 
+    // phaser animation
     scene.tweens.add({
-      targets: player,
-      displayWidth: player.originalHeight * power.widthMultiplier,
-      x: player.homeX + (kickSign * power.kickDistance),
-      duration: power.duration,
+      targets: player, // rectangle animated
+      displayWidth: player.originalHeight * power.widthMultiplier, // visually widens player
+      x: player.homeX + (kickSign * power.kickDistance), // right or left kick
+      duration: power.duration, // how fast kick happens
       ease: 'Power2',
-      yoyo: true,
-      hold: 60,
+      yoyo: true, // returns to original position
+      hold: 60, // pauses at extension
       onComplete: () => {
         player.x = player.homeX
-        player.displayWidth = player.originalWidth
+        player.displayWidth = player.originalWidth // restore original size
         player.isKicking = false
       }
     })

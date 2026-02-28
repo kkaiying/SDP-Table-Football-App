@@ -15,14 +15,19 @@ import { rodSliding, kickRod } from './foosballControls'
         input: {
           mouse: {
             wheel: true
-          }
+          },
+          gamepad: true // enable gamepad support
         },
         scene: {
-          create
+          create,
+          update
         }
       }
 
       function create() {
+
+        this.allPlayerRods = []
+        this.controllerKickLocked = false
 
         // dimensions for components in the table
         const canvasWidth = this.scale.width
@@ -61,6 +66,10 @@ import { rodSliding, kickRod } from './foosballControls'
         const handleColour = 0x000000
         const playerColour = 0xff0000
         const opponentColour = 0xffff00
+
+        this.input.gamepad.once('connected', (pad) => {
+          console.log('Gamepad connected:', pad.id)
+        })
 
         // each rods football players
         const football_players = {
@@ -199,10 +208,10 @@ import { rodSliding, kickRod } from './foosballControls'
           rodHitbox.setInteractive({ draggable: true, useHandCursor: true })
           rodSliding(this, rodHitbox, rodElements, {tableTopEdge, tableBottomEdge, tableCenterY, playerHeight})
           // per-rod scroll state
-          rodHitbox.scrollCount = 0
-          rodHitbox.scrollTimer = null
+          rodHitbox.scrollCount = 0 // count of wheel events
+          rodHitbox.scrollTimer = null // timer to reset count and trigger kick
 
-          rodHitbox.on('wheel', (pointer, dx, dy) => {
+          rodHitbox.on('wheel', (pointer, dx, dy) => { // dy < 0 = scroll up, dy > 0 = scroll down
             rodHitbox.scrollCount += 1
 
             // store last scroll direction
@@ -212,9 +221,11 @@ import { rodSliding, kickRod } from './foosballControls'
               rodHitbox.scrollTimer.remove(false)
             }
 
+            // make sure scrolling is finished, fire kick
             rodHitbox.scrollTimer = this.time.delayedCall(120, () => {
               let level
 
+              // scroll speed determines kick level - faster scroll = stronger kick
               if (rodHitbox.scrollCount <= 2) level = 1
               else if (rodHitbox.scrollCount <= 4) level = 2
               else level = 3
@@ -226,6 +237,10 @@ import { rodSliding, kickRod } from './foosballControls'
             })
           })
 
+          if (playerRods.includes(i)) {
+            this.allPlayerRods.push(playerObjects)
+          }
+
         }
     
         // left goal 
@@ -233,6 +248,35 @@ import { rodSliding, kickRod } from './foosballControls'
   
         // right goal
         this.add.rectangle(tableRightEdge, tableCenterY, 20, tableHeight / 3, 0xffffff).setStrokeStyle(2, 0x000000)
+      }
+
+      function update() {
+        const pad = this.input.gamepad.getPad(0)
+        if (!pad) return
+        
+        const trigger = pad.buttons.find(b => b.value > 0.2)
+        const triggerValue = trigger ? trigger.value : 0
+        const stickX = pad.axes[0]?.getValue() || 0
+
+        if (triggerValue > 0.2 && !this.controllerKickLocked) {
+          this.controllerKickLocked = true
+
+          let level
+          if (triggerValue < 0.4) level = 1
+          else if (triggerValue < 0.75) level = 2
+          else level = 3
+
+          const direction = stickX >= 0 ? 'right' : 'left'
+
+          // kick all player rods
+          this.allPlayerRods.forEach(players => {
+            kickRod(this, players, level, direction)
+          })
+
+          this.time.delayedCall(200, () => {
+            this.controllerKickLocked = false
+          })
+        }
       }
 
       const game = new Phaser.Game(config)
