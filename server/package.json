@@ -10,6 +10,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "redis": "^3.1.2",
     "ws": "^8.19.0"
   }
 }

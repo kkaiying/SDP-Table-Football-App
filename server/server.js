@@ -1,5 +1,12 @@
 const WebSocket = require('ws')
+const redis = require('redis')
+
   const wss = new WebSocket.Server({ port: 8080 })
+  const client = redis.createClient();
+
+  client.on('error', (err) => {
+    console.error('Redis error:', err);
+  });
 
   wss.on('connection', (ws) => {
     console.log('Client connected')
@@ -20,6 +27,8 @@ const WebSocket = require('ws')
           handleKickCommand(command)
         }
 
+	handleIncomingData(data);
+
       } catch (err) {
         console.error('Parse error:', err)
       }
@@ -39,6 +48,16 @@ const WebSocket = require('ws')
     console.log(`Kicking rod ${command.rod} with level ${command.level}, direction: 
   ${command.direction}`)
     // kick
+  }
+
+  function handleIncomingData(jsonData) {
+    client.lpush('task_queue', jsonData, (err, reply) => {
+      if (err) {
+        console.error('Failed to push to Redis:', err);
+      } else {
+        console.log('Data queued. Items in queue:', reply);
+      }
+    });
   }
 
   console.log('WebSocket server running on ws://localhost:8080')
