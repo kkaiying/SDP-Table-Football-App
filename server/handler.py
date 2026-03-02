@@ -1,5 +1,7 @@
 import redis
 import json
+import serial
+import time
 
 rod_limits = [
         (394.9, 305.1),
@@ -29,6 +31,8 @@ binary_digits = [
         "1101",
         "1110",
         "1111"]
+
+serial_out = serial.Serial('/dev/serial0', 9600, timeout = 1)
 
 def print_binary_8(number):
     print(binary_digits[number >> 4] + binary_digits[number & 0x0F])
@@ -61,7 +65,9 @@ def main():
 
             # Serial out rod_switch and float_position
             # print(str(rod_switch) + " " + str(command_byte))
-            print_binary_8_double(rod_switch, command_byte);
+            print_binary_8_double(rod_switch, command_byte)
+
+            serial_out.write(bytes([rod_switch, command_byte]))
 
 
 if __name__ == "__main__":
