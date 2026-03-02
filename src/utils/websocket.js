@@ -1,7 +1,10 @@
 let ws = null
 
   export function connectToServer() {
-    ws = new WebSocket('ws://localhost:8080') 
+    const host = window.location.hostname;
+    //ws = new WebSocket('ws://localhost:8080') 
+    //ws = new WebSocket('ws://100.84.232.141:8080')
+    ws = new WebSocket(`ws://${host}:8080`);
 
     ws.onopen = () => {
       console.log('Connected to server')
