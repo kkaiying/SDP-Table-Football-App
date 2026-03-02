@@ -47,7 +47,7 @@ def main():
         data = json.loads(ticket)
 
         rod_switch = 0b01000000
-        rod_id = data['rod'] - 1
+        rod_id = data['rod']
         rod_switch = rod_switch | rod_id << 4
 
         command_byte = 0

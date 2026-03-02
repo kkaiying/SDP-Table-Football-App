@@ -4,6 +4,9 @@ const redis = require('redis')
   const wss = new WebSocket.Server({ port: 8080 })
   const client = redis.createClient();
 
+  // Rod IDs to swap
+  const valid_rod_ids = [1, 2, 4, 6]
+
   client.on('error', (err) => {
     console.error('Redis error:', err);
   });
@@ -14,7 +17,7 @@ const redis = require('redis')
     ws.on('message', (data) => {
       try {
         const command = JSON.parse(data)
-        console.log('Received command:', command)
+        //console.log('Received command:', command)
 
         if (!command.rod || !command.type) {
           console.error('Invalid command format')
@@ -40,7 +43,7 @@ const redis = require('redis')
   })
 
   function handleSlideCommand(command) {
-    console.log(`Moving rod ${command.rod} to position ${command.position}`)
+    //console.log(`Moving rod ${command.rod} to position ${command.position}`)
     // sliding
   }
 
@@ -51,13 +54,32 @@ const redis = require('redis')
   }
 
   function handleIncomingData(jsonData) {
-    client.lpush('task_queue', jsonData, (err, reply) => {
-      if (err) {
-        console.error('Failed to push to Redis:', err);
-      } else {
-        console.log('Data queued. Items in queue:', reply);
-      }
-    });
+    // Convert json buffer to json object for editing
+    const jsonString = jsonData.toString();
+    const data = JSON.parse(jsonString);
+
+    // Get index of rod
+    const rod_index = valid_rod_ids.indexOf(data.rod);
+
+    // If a valid rod (red)
+    if (rod_index > -1) {
+
+      // Change the rod index in the json to match the expected index
+      data.rod = rod_index;
+
+      // Convert back into buffer to send to socket
+      const newString = JSON.stringify(data);
+      const newBuffer = Buffer.from(newString);
+
+      // Push json to socket
+      client.lpush('task_queue', newBuffer, (err, reply) => {
+        if (err) {
+          console.error('Failed to push to Redis:', err);
+        } else {
+          console.log('Data queued. Items in queue:', reply);
+        }
+      });
+    }
   }
 
   console.log('WebSocket server running on ws://localhost:8080')
