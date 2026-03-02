@@ -17,7 +17,7 @@ const redis = require('redis')
     ws.on('message', (data) => {
       try {
         const command = JSON.parse(data)
-        //console.log('Received command:', command)
+        console.log('Received command:', command)
 
         if (!command.rod || !command.type) {
           console.error('Invalid command format')
@@ -43,7 +43,7 @@ const redis = require('redis')
   })
 
   function handleSlideCommand(command) {
-    //console.log(`Moving rod ${command.rod} to position ${command.position}`)
+    console.log(`Moving rod ${command.rod} to position ${command.position}`)
     // sliding
   }
 
