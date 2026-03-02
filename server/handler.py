@@ -68,6 +68,7 @@ def main():
                 command_byte = command_byte | int(float_position)
                 print_binary_8_double(rod_switch, command_byte)
                 serial_out.write(bytes([rod_switch, command_byte]))
+                prev_positions[rod_id] = int(float_position)
 
 
 if __name__ == "__main__":
