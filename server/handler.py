@@ -32,8 +32,6 @@ binary_digits = [
         "1110",
         "1111"]
 
-prev_positions = [-1, -1, -1, -1]
-
 serial_out = serial.Serial('/dev/serial0', 9600, timeout = 1)
 
 def print_binary_8(number):
@@ -64,11 +62,9 @@ def main():
             ratio = (data['position'] - rod_limits[rod_id][0]) / (rod_limits[rod_id][1] - rod_limits[rod_id][0])
             float_position = ratio * 63.0
 
-            if int(float_position != prev_positions[rod_id]):
-                command_byte = command_byte | int(float_position)
-                print_binary_8_double(rod_switch, command_byte)
-                serial_out.write(bytes([rod_switch, command_byte]))
-                prev_positions[rod_id] = int(float_position)
+            command_byte = command_byte | int(float_position)
+            print_binary_8_double(rod_switch, command_byte)
+            serial_out.write(bytes([rod_switch, command_byte]))
 
 
 if __name__ == "__main__":
