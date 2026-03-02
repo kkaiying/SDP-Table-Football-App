@@ -17,20 +17,14 @@ import { connectToServer } from '../utils/websocket'
         input: {
           mouse: {
             wheel: true
-          },
-          gamepad: true // enable gamepad support
+          }
         },
         scene: {
-          create,
-          update
+          create
         }
       }
 
       function create() {
-
-        this.allPlayerRods = []
-        this.controllerKickLocked = false
-        this.selectedRodIndex = 0
 
         // dimensions for components in the table
         const canvasWidth = this.scale.width
@@ -69,10 +63,6 @@ import { connectToServer } from '../utils/websocket'
         const handleColour = 0x000000
         const playerColour = 0xff0000
         const opponentColour = 0xffff00
-
-        this.input.gamepad.once('connected', (pad) => {
-          console.log('Gamepad connected:', pad.id)
-        })
 
         // each rods football players
         const football_players = {
@@ -245,15 +235,6 @@ import { connectToServer } from '../utils/websocket'
             })
           })
 
-          if (playerRods.includes(i)) {
-            this.allPlayerRods.push({
-              players: playerObjects,
-              elements: rodElements,
-              hitbox: rodHitbox,
-              bounds: { tableTopEdge, tableBottomEdge }
-            })
-          }
-
         }
     
         // left goal 
@@ -261,56 +242,6 @@ import { connectToServer } from '../utils/websocket'
   
         // right goal
         this.add.rectangle(tableRightEdge, tableCenterY, 20, tableHeight / 3, 0xffffff).setStrokeStyle(2, 0x000000)
-      }
-
-      function update() {
-        const pad = this.input.gamepad.getPad(0)
-        if (!pad) return
-
-        const stickYRaw = pad.axes[1]?.getValue() || 0
-        const stickY = Math.abs(stickYRaw) > 0.2 ? stickYRaw : 0
-        
-        const trigger = pad.buttons.find(b => b.value > 0.2)
-        const triggerValue = trigger ? trigger.value : 0
-        const stickX = pad.axes[0]?.getValue() || 0
-
-        if (stickY !== 0) {
-          const rodData = this.allPlayerRods[this.selectedRodIndex]
-          const speed = 5
-
-          rodData.elements.forEach(element => {
-            element.y += stickY * speed
-          })
-
-          // clamp movement to table bounds
-          const topLimit = rodData.bounds.tableTopEdge
-          const bottomLimit = rodData.bounds.tableBottomEdge
-
-          rodData.elements.forEach(element => {
-            if (element.y < topLimit) element.y = topLimit
-            if (element.y > bottomLimit) element.y = bottomLimit
-          })
-        }
-
-        if (triggerValue > 0.2 && !this.controllerKickLocked) {
-          this.controllerKickLocked = true
-
-          let level
-          if (triggerValue < 0.4) level = 1
-          else if (triggerValue < 0.75) level = 2
-          else level = 3
-
-          const direction = stickX >= 0 ? 'right' : 'left'
-
-          // kick all player rods
-          this.allPlayerRods.forEach(players => {
-            kickRod(this, players, level, direction)
-          })
-
-          this.time.delayedCall(200, () => {
-            this.controllerKickLocked = false
-          })
-        }
       }
 
       const game = new Phaser.Game(config)
