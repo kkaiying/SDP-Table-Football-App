@@ -17,8 +17,7 @@ import { connectToServer } from '../utils/websocket'
         input: {
           mouse: {
             wheel: true
-          },
-          gamepad: true // enable gamepad support
+          }
         },
         scene: {
           create,
@@ -28,9 +27,12 @@ import { connectToServer } from '../utils/websocket'
 
       function create() {
 
-        this.allPlayerRods = []
-        this.controllerKickLocked = false
-        this.selectedRodIndex = 0
+        this.controlMode = "defense" 
+        // "defence" = rods 1 & 2
+        // "attack"  = rods 4 & 6
+
+        this.prevAState = false
+        this.prevYState = false
 
         // dimensions for components in the table
         const canvasWidth = this.scale.width
@@ -69,10 +71,6 @@ import { connectToServer } from '../utils/websocket'
         const handleColour = 0x000000
         const playerColour = 0xff0000
         const opponentColour = 0xffff00
-
-        this.input.gamepad.once('connected', (pad) => {
-          console.log('Gamepad connected:', pad.id)
-        })
 
         // each rods football players
         const football_players = {
@@ -209,6 +207,55 @@ import { connectToServer } from '../utils/websocket'
           const hitboxHeight = tableHeight
           const rodHitbox = this.add.rectangle(rodX, tableCenterY, hitboxWidth, hitboxHeight, 0x000000, 0)
           rodHitbox.setInteractive({ draggable: true, useHandCursor: true })
+          
+          if (i === 1) {
+            const offsets = rodElements.map(el => el.y - rodHitbox.y)
+
+            this.leftGoalieRod = {
+              hitbox: rodHitbox,
+              elements: rodElements,
+              offsets,
+              tableTopEdge,
+              tableBottomEdge
+            }
+          }
+
+          if (i === 2) {
+            const offsets = rodElements.map(el => el.y - rodHitbox.y)
+
+            this.leftDefenderRod = {
+              hitbox: rodHitbox,
+              elements: rodElements,
+              offsets,
+              tableTopEdge,
+              tableBottomEdge
+            }
+          }
+
+          if (i === 4) {
+            const offsets = rodElements.map(el => el.y - rodHitbox.y)
+
+            this.midfieldRod = {
+              hitbox: rodHitbox,
+              elements: rodElements,
+              offsets,
+              tableTopEdge,
+              tableBottomEdge
+            }
+          }
+
+          if (i === 6) {
+            const offsets = rodElements.map(el => el.y - rodHitbox.y)
+
+            this.attackRod = {
+              hitbox: rodHitbox,
+              elements: rodElements,
+              offsets,
+              tableTopEdge,
+              tableBottomEdge
+            }
+          }
+          
           rodSliding(this, rodHitbox, rodElements, {
             tableTopEdge, 
             tableBottomEdge, 
@@ -245,15 +292,6 @@ import { connectToServer } from '../utils/websocket'
             })
           })
 
-          if (playerRods.includes(i)) {
-            this.allPlayerRods.push({
-              players: playerObjects,
-              elements: rodElements,
-              hitbox: rodHitbox,
-              bounds: { tableTopEdge, tableBottomEdge }
-            })
-          }
-
         }
     
         // left goal 
@@ -263,53 +301,81 @@ import { connectToServer } from '../utils/websocket'
         this.add.rectangle(tableRightEdge, tableCenterY, 20, tableHeight / 3, 0xffffff).setStrokeStyle(2, 0x000000)
       }
 
+      function moveRod(rodData, delta) {
+        const { hitbox, elements, offsets, tableTopEdge, tableBottomEdge } = rodData
+
+        // Get player rectangles only (ignore rod line + handle)
+        const players = elements.filter(el => el.displayHeight && el.displayHeight < 50)
+
+        const isGoalkeeper = players.length === 1
+
+        const topPlayerY = Math.min(...players.map(el => el.y))
+        const bottomPlayerY = Math.max(...players.map(el => el.y))
+
+        const topDistance = hitbox.y - topPlayerY
+        const bottomDistance = bottomPlayerY - hitbox.y
+
+        const padding = isGoalkeeper ? 205 : (players[0].displayHeight / 2)
+
+        const minY = tableTopEdge + topDistance + padding
+        const maxY = tableBottomEdge - bottomDistance - padding
+
+        hitbox.y = Phaser.Math.Clamp(hitbox.y + delta, minY, maxY)
+
+        elements.forEach((element, index) => {
+          element.y = hitbox.y + offsets[index]
+        })
+      }
+
       function update() {
-        const pad = this.input.gamepad.getPad(0)
-        if (!pad) return
+        const pads = navigator.getGamepads()
+        const gamepad = Array.from(pads).find(pad => pad)
+        if (!gamepad) return
 
-        const stickYRaw = pad.axes[1]?.getValue() || 0
-        const stickY = Math.abs(stickYRaw) > 0.2 ? stickYRaw : 0
-        
-        const trigger = pad.buttons.find(b => b.value > 0.2)
-        const triggerValue = trigger ? trigger.value : 0
-        const stickX = pad.axes[0]?.getValue() || 0
+        const deadzone = 0.15
+        const speed = 8
 
-        if (stickY !== 0) {
-          const rodData = this.allPlayerRods[this.selectedRodIndex]
-          const speed = 5
+        // mode switching
 
-          rodData.elements.forEach(element => {
-            element.y += stickY * speed
-          })
+        const aPressed = gamepad.buttons[0].pressed
+        const yPressed = gamepad.buttons[3].pressed
 
-          // clamp movement to table bounds
-          const topLimit = rodData.bounds.tableTopEdge
-          const bottomLimit = rodData.bounds.tableBottomEdge
-
-          rodData.elements.forEach(element => {
-            if (element.y < topLimit) element.y = topLimit
-            if (element.y > bottomLimit) element.y = bottomLimit
-          })
+        if (aPressed && !this.prevAState) {
+          this.controlMode = "defence"
         }
 
-        if (triggerValue > 0.2 && !this.controllerKickLocked) {
-          this.controllerKickLocked = true
+        if (yPressed && !this.prevYState) {
+          this.controlMode = "attack"
+        }
 
-          let level
-          if (triggerValue < 0.4) level = 1
-          else if (triggerValue < 0.75) level = 2
-          else level = 3
+        this.prevAState = aPressed
+        this.prevYState = yPressed
 
-          const direction = stickX >= 0 ? 'right' : 'left'
+        // stick input
 
-          // kick all player rods
-          this.allPlayerRods.forEach(players => {
-            kickRod(this, players, level, direction)
-          })
+        const leftY = gamepad.axes[1]
+        const rightY = gamepad.axes[3]
 
-          this.time.delayedCall(200, () => {
-            this.controllerKickLocked = false
-          })
+        if (this.controlMode === "defence") {
+
+          if (this.leftGoalieRod && Math.abs(leftY) > deadzone) {
+            moveRod(this.leftGoalieRod, leftY * speed)
+          }
+
+          if (this.leftDefenderRod && Math.abs(rightY) > deadzone) {
+            moveRod(this.leftDefenderRod, rightY * speed)
+          }
+
+        } else if (this.controlMode === "attack") {
+
+          if (this.midfieldRod && Math.abs(leftY) > deadzone) {
+            moveRod(this.midfieldRod, leftY * speed)
+          }
+
+          if (this.attackRod && Math.abs(rightY) > deadzone) {
+            moveRod(this.attackRod, rightY * speed)
+          }
+
         }
       }
 
