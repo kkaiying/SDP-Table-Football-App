@@ -1,0 +1,36 @@
+The Pi transmits, and the Arduino receives, a 2 byte command.
+
+Command:
+
+76543210 76543210
+xxxxxxxx xxxxxxxx
+
+Bits 6-7 is the opcode of the command.
+
+	00 - No command (this shouldn't be sent really)
+	01 - Switch rod (changes which rod we are controlling)
+	10 - Slide rod (moves rod to given position)
+	11 - Kick rod (rotates rod)
+
+Bits 0-5 is the operand. How it is laid out depends on the opcode
+
+	00 - There is no operand
+	01 - Bits 4-5 hold a value from 0 to 3, indicating the id of the rod
+	10 - Bits 0-5 hold a value from 0 to 63, where 0 is one end and 63 is the other
+	11 - (THIS MAY CHANGE TO INCLUDE DIRECTION AND POWER) There is no operand
+
+The first byte should always be a 'switch rod' command (01), and the second byte should be the action to be taken on that rod.
+
+Some examples:
+
+	Move rod id 2 to the rightmost position (position 0)
+	01100000 10000000
+
+	Move rod id 0 to the leftmost position (position 63)
+	01000000 10111111
+
+	Move rod id 1 to position 24
+	01010000 10011000
+
+	Kick with rod id 3
+	01110000 11000000
