@@ -20,11 +20,19 @@ import { connectToServer } from '../utils/websocket'
           }
         },
         scene: {
-          create
+          create,
+          update
         }
       }
 
       function create() {
+
+        this.controlMode = "defense" 
+        // "defence" = rods 1 & 2
+        // "attack"  = rods 4 & 6
+
+        this.prevAState = false
+        this.prevYState = false
 
         // dimensions for components in the table
         const canvasWidth = this.scale.width
@@ -199,6 +207,55 @@ import { connectToServer } from '../utils/websocket'
           const hitboxHeight = tableHeight
           const rodHitbox = this.add.rectangle(rodX, tableCenterY, hitboxWidth, hitboxHeight, 0x000000, 0)
           rodHitbox.setInteractive({ draggable: true, useHandCursor: true })
+          
+          if (i === 1) {
+            const offsets = rodElements.map(el => el.y - rodHitbox.y)
+
+            this.leftGoalieRod = {
+              hitbox: rodHitbox,
+              elements: rodElements,
+              offsets,
+              tableTopEdge,
+              tableBottomEdge
+            }
+          }
+
+          if (i === 2) {
+            const offsets = rodElements.map(el => el.y - rodHitbox.y)
+
+            this.leftDefenderRod = {
+              hitbox: rodHitbox,
+              elements: rodElements,
+              offsets,
+              tableTopEdge,
+              tableBottomEdge
+            }
+          }
+
+          if (i === 4) {
+            const offsets = rodElements.map(el => el.y - rodHitbox.y)
+
+            this.midfieldRod = {
+              hitbox: rodHitbox,
+              elements: rodElements,
+              offsets,
+              tableTopEdge,
+              tableBottomEdge
+            }
+          }
+
+          if (i === 6) {
+            const offsets = rodElements.map(el => el.y - rodHitbox.y)
+
+            this.attackRod = {
+              hitbox: rodHitbox,
+              elements: rodElements,
+              offsets,
+              tableTopEdge,
+              tableBottomEdge
+            }
+          }
+          
           rodSliding(this, rodHitbox, rodElements, {
             tableTopEdge, 
             tableBottomEdge, 
@@ -242,6 +299,84 @@ import { connectToServer } from '../utils/websocket'
   
         // right goal
         this.add.rectangle(tableRightEdge, tableCenterY, 20, tableHeight / 3, 0xffffff).setStrokeStyle(2, 0x000000)
+      }
+
+      function moveRod(rodData, delta) {
+        const { hitbox, elements, offsets, tableTopEdge, tableBottomEdge } = rodData
+
+        // Get player rectangles only (ignore rod line + handle)
+        const players = elements.filter(el => el.displayHeight && el.displayHeight < 50)
+
+        const isGoalkeeper = players.length === 1
+
+        const topPlayerY = Math.min(...players.map(el => el.y))
+        const bottomPlayerY = Math.max(...players.map(el => el.y))
+
+        const topDistance = hitbox.y - topPlayerY
+        const bottomDistance = bottomPlayerY - hitbox.y
+
+        const padding = isGoalkeeper ? 205 : (players[0].displayHeight / 2)
+
+        const minY = tableTopEdge + topDistance + padding
+        const maxY = tableBottomEdge - bottomDistance - padding
+
+        hitbox.y = Phaser.Math.Clamp(hitbox.y + delta, minY, maxY)
+
+        elements.forEach((element, index) => {
+          element.y = hitbox.y + offsets[index]
+        })
+      }
+
+      function update() {
+        const pads = navigator.getGamepads()
+        const gamepad = Array.from(pads).find(pad => pad)
+        if (!gamepad) return
+
+        const deadzone = 0.15
+        const speed = 8
+
+        // mode switching
+
+        const aPressed = gamepad.buttons[0].pressed
+        const yPressed = gamepad.buttons[3].pressed
+
+        if (aPressed && !this.prevAState) {
+          this.controlMode = "defence"
+        }
+
+        if (yPressed && !this.prevYState) {
+          this.controlMode = "attack"
+        }
+
+        this.prevAState = aPressed
+        this.prevYState = yPressed
+
+        // stick input
+
+        const leftY = gamepad.axes[1]
+        const rightY = gamepad.axes[3]
+
+        if (this.controlMode === "defence") {
+
+          if (this.leftGoalieRod && Math.abs(leftY) > deadzone) {
+            moveRod(this.leftGoalieRod, leftY * speed)
+          }
+
+          if (this.leftDefenderRod && Math.abs(rightY) > deadzone) {
+            moveRod(this.leftDefenderRod, rightY * speed)
+          }
+
+        } else if (this.controlMode === "attack") {
+
+          if (this.midfieldRod && Math.abs(leftY) > deadzone) {
+            moveRod(this.midfieldRod, leftY * speed)
+          }
+
+          if (this.attackRod && Math.abs(rightY) > deadzone) {
+            moveRod(this.attackRod, rightY * speed)
+          }
+
+        }
       }
 
       const game = new Phaser.Game(config)
