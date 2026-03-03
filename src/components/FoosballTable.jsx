@@ -30,9 +30,13 @@ import { connectToServer } from '../utils/websocket'
         this.controlMode = "defense" 
         // "defence" = rods 1 & 2
         // "attack"  = rods 4 & 6
-
         this.prevAState = false
         this.prevYState = false
+
+        this.prevLT = 0
+        this.prevRT = 0
+        this.prevB = false
+        this.prevX = false
 
         // dimensions for components in the table
         const canvasWidth = this.scale.width
@@ -304,7 +308,7 @@ import { connectToServer } from '../utils/websocket'
       function moveRod(rodData, delta) {
         const { hitbox, elements, offsets, tableTopEdge, tableBottomEdge } = rodData
 
-        // Get player rectangles only (ignore rod line + handle)
+        // get player rectangles only
         const players = elements.filter(el => el.displayHeight && el.displayHeight < 50)
 
         const isGoalkeeper = players.length === 1
@@ -328,6 +332,7 @@ import { connectToServer } from '../utils/websocket'
       }
 
       function update() {
+        
         const pads = navigator.getGamepads()
         const gamepad = Array.from(pads).find(pad => pad)
         if (!gamepad) return
@@ -335,8 +340,7 @@ import { connectToServer } from '../utils/websocket'
         const deadzone = 0.15
         const speed = 8
 
-        // mode switching
-
+        // mode switching (attack/defence)
         const aPressed = gamepad.buttons[0].pressed
         const yPressed = gamepad.buttons[3].pressed
 
@@ -377,6 +381,68 @@ import { connectToServer } from '../utils/websocket'
           }
 
         }
+
+        // kicking
+        const LT = gamepad.buttons[6]?.value ?? 0
+        const RT = gamepad.buttons[7]?.value ?? 0
+
+        const bPressed = gamepad.buttons[1].pressed // B
+        const xPressed = gamepad.buttons[2].pressed // X
+
+        function getKickLevel(triggerValue) {
+          if (triggerValue < 0.2) return 0
+          if (triggerValue < 0.5) return 1
+          if (triggerValue < 0.8) return 2
+          return 3
+        }
+
+        const leftKickLevel = getKickLevel(LT)
+        const rightKickLevel = getKickLevel(RT)
+
+        // detect new button press
+        const bJustPressed = bPressed && !this.prevB
+        const xJustPressed = xPressed && !this.prevX
+
+        // direction
+        let kickDirection = null
+        if (bJustPressed) kickDirection = "right"
+        if (xJustPressed) kickDirection = "left"
+
+        // either B or X just pressed
+        if (kickDirection) {
+
+          // left controlled rod (1 or 4)
+          if (leftKickLevel > 0) {
+
+            let rod =
+              this.controlMode === "defence"
+                ? this.leftGoalieRod
+                : this.midfieldRod
+
+            if (rod) {
+              const players = rod.elements.filter(el => el.originalWidth)
+              kickRod(this, players, leftKickLevel, kickDirection, 0)
+            }
+          }
+
+          // right controlled rod (2 or 6)
+          if (rightKickLevel > 0) {
+
+            let rod =
+              this.controlMode === "defence"
+                ? this.leftDefenderRod
+                : this.attackRod
+
+            if (rod) {
+              const players = rod.elements.filter(el => el.originalWidth)
+              kickRod(this, players, rightKickLevel, kickDirection, 0)
+            }
+          }
+        }
+
+        // previous states
+        this.prevB = bPressed
+        this.prevX = xPressed
       }
 
       const game = new Phaser.Game(config)
