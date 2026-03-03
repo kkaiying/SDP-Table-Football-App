@@ -63,9 +63,16 @@ def main():
             float_position = ratio * 63.0
 
             command_byte = command_byte | int(float_position)
-            print_binary_8_double(rod_switch, command_byte)
-            serial_out.write(bytes([rod_switch, command_byte]))
 
+        elif data['type'] == 'kick':
+            command_byte = 0b11000000 +
+                data['power'] << 3;
+
+            if data['level'] == 1:
+                command_byte = command_byte | 0b00100000
+
+        print_binary_8_double(rod_switch, command_byte)
+        serial_out.write(bytes([rod_switch, command_byte]))
 
 if __name__ == "__main__":
     main()
