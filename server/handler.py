@@ -64,14 +64,17 @@ def main():
 
             command_byte = command_byte | int(float_position)
 
-        elif data['type'] == 'kick':
-            command_byte = 0b11000000 + data['lwvel'] << 3;
+            print_binary_8_double(rod_switch, command_byte)
+            serial_out.write(bytes([rod_switch, command_byte]))
 
-            if data['level'] == 1:
+        elif data['type'] == 'kick':
+            command_byte = 0b11000000 + (data['level'] << 3);
+
+            if data['direction'] == 'right':
                 command_byte = command_byte | 0b00100000
 
-        print_binary_8_double(rod_switch, command_byte)
-        serial_out.write(bytes([rod_switch, command_byte]))
+            print_binary_8_double(rod_switch, command_byte)
+            serial_out.write(bytes([rod_switch, command_byte]))
 
 if __name__ == "__main__":
     main()
