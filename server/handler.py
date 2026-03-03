@@ -54,7 +54,7 @@ def main():
         rod_id = data['rod']
         rod_switch = rod_switch | rod_id << 4
 
-        serial_out.write(rod_switch)
+        #serial_out.write(rod_switch)
 
         command_byte = 0
 
@@ -67,8 +67,8 @@ def main():
             command_byte = command_byte | int(float_position)
 
             print_binary_8_double(rod_switch, command_byte)
-            #serial_out.write(bytes([rod_switch, command_byte]))
-            serial_out.write(command_byte)
+            serial_out.write(bytes([rod_switch, command_byte]))
+            #serial_out.write(command_byte)
 
         elif data['type'] == 'kick':
             command_byte = 0b11000000 + (data['level'] << 3);
@@ -77,8 +77,9 @@ def main():
                 command_byte = command_byte | 0b00100000
 
             print_binary_8_double(rod_switch, command_byte)
-            #serial_out.write(bytes([rod_switch, command_byte]))
-            serial_out.write(command_byte)
+            serial_out.write(bytes([rod_switch, command_byte]))
+            #serial_out.write(command_byte)
+            serial_out.flush();
 
 if __name__ == "__main__":
     main()
