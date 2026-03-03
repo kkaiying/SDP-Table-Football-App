@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ $1 == "emu" ]; then
+	echo "Emulating Pi serial output"
+	sudo socat -d -d pty,link=/dev/serial0 pty,link=/dev/serial1
+fi
+
 echo "Starting server..."
 
 cd server 
@@ -7,7 +12,7 @@ cd server
 npm start &
 pid1=$!
 
-python3 handler.py &
+sudo python3 handler.py &
 pid2=$!
 
 cd ../
