@@ -65,8 +65,7 @@ def main():
             command_byte = command_byte | int(float_position)
 
         elif data['type'] == 'kick':
-            command_byte = 0b11000000 +
-                data['power'] << 3;
+            command_byte = 0b11000000 + data['power'] << 3;
 
             if data['level'] == 1:
                 command_byte = command_byte | 0b00100000
