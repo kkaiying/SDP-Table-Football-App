@@ -73,8 +73,8 @@ import { connectToServer } from '../utils/websocket'
         const tableMarkings = 0xffffff
         const ballColour = 0xf0eceb
         const handleColour = 0x000000
-        const playerColour = 0xff0000
-        const opponentColour = 0xffff00
+        const playerColour = 0xffff00
+        const opponentColour = 0xff0000
 
         // each rods football players
         const football_players = {
