@@ -79,7 +79,7 @@ def main():
             EOTByte = 0b00000001;
 
             print_binary_8_double(rod_switch, command_byte)
-            serial_out.write(bytes([rod_switch, command_byte, EOT_Byte]))
+            serial_out.write(bytes([rod_switch, command_byte, EOT_Byte, EOT_Byte]))
             #serial_out.write(command_byte)
             serial_out.flush();
 
