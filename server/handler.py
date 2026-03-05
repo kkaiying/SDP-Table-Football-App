@@ -76,10 +76,10 @@ def main():
             if data['direction'] == 'right':
                 command_byte = command_byte | 0b00100000
 
-            EOTByte = 0b00000001;
+            EOT_byte = 0b00000001;
 
             print_binary_8_double(rod_switch, command_byte)
-            serial_out.write(bytes([rod_switch, command_byte, EOT_Byte, EOT_Byte]))
+            serial_out.write(bytes([rod_switch, command_byte, EOT_byte, EOT_byte]))
             #serial_out.write(command_byte)
             serial_out.flush();
 
