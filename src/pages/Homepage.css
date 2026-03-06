@@ -28,3 +28,13 @@
   cursor: pointer;
   background-color: #565757;
 }
+
+.howToPlayButton {
+  margin-top: 20px;
+  padding: 16px 36px;
+  font-size: 40px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background-color: #565757;
+}
