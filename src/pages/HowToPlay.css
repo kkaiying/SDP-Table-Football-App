@@ -1,0 +1,46 @@
+.howToPlay {
+  min-height: 100vh;
+  min-width: 100vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: "Century Gothic", sans-serif;
+  background-color: #3C9858;
+  color: #E8ECEF;
+}
+
+.title {
+  position: absolute;
+  top: 0px;           /* Distance from the top of the page */
+  left: 50%;            /* Center horizontally */
+  transform: translateX(-50%); /* Adjust for perfect centering */
+  font-size: 70px;
+  white-space: nowrap;
+}
+
+.mouseControls {
+  top: 150px;
+  bottom: 30px;
+  left: 30px; /* might want to change these? */
+  right: 770px;
+  position: absolute;
+  background-color: #ffffff; /* placeholder so you can see the area */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.controllerControls {
+  top: 150px;
+  bottom: 30px;
+  left: 770px; /* might want to change these? */
+  right: 30px;
+  position: absolute;
+  background-color: #000000; /* placeholder so you can see the area */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}

@@ -10,6 +10,9 @@ export default function Homepage() {
       <button className = "playButton" onClick={() => navigate("/play")}>
         Play
       </button>
+      <button className = "howToPlayButton" onClick={() => navigate("/howtoplay")}>
+        How to Play
+      </button>
     </div>
   );
 }
