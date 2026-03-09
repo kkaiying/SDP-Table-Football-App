@@ -2,7 +2,8 @@
 
 if [ $1 == "emu" ]; then
 	echo "Emulating Pi serial output"
-	sudo socat -d -d pty,link=/dev/serial0 pty,link=/dev/serial1
+	sudo socat -d -d pty,link=/dev/serial0 pty,link=/dev/serial1 &
+	pid4=$!
 fi
 
 echo "Starting server..."
@@ -26,6 +27,9 @@ closeServer() {
 	echo "Stopping server..."
 	kill "$pid1" "$pid2" "$pid3" 2>/dev/null
 	wait "$pid1" "$pid2" "$pid3" 2>/dev/null
+	if [ $1 == "emu" ]; then
+		kill "$pid4" 2>/dev/null	
+	fi
 	echo "Server stopped"
 }
 
