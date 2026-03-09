@@ -12,7 +12,7 @@ cd server
 npm start &
 pid1=$!
 
-sudo python3 handler.py &
+sudo /usr/bin/python3 handler.py &
 pid2=$!
 
 cd ../
