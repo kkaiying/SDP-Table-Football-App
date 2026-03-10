@@ -6,7 +6,7 @@ export default function Homepage() {
 
   return (
     <div className = "home">
-      <h1 className = "title">Remote Foosball Opponent</h1>
+      <h1 className = "homeTitle">Remote Foosball Opponent</h1>
       <button className = "playButton" onClick={() => navigate("/play")}>
         Play
       </button>
