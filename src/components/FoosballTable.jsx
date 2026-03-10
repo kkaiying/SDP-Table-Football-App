@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import Phaser from 'phaser'
 import './FoosballTable.css'
-import { rodSliding, kickRod } from './foosballControls'
+import { rodSliding, kickRod, chargeRod, releaseCharge} from './foosballControls'
 import { connectToServer } from '../utils/websocket'
 
 function FoosballTable() {
@@ -23,6 +23,9 @@ function FoosballTable() {
       // "attack"  = rods 4 & 6
       this.controlMode = "defence"
       this.prevAState = false
+
+      this.leftChargeLocked = false
+      this.rightChargeLocked = false
 
       this.prevLT = 0
       this.prevRT = 0
@@ -187,7 +190,12 @@ function FoosballTable() {
           player.originalWidth = playerWidth
           player.originalHeight = playerHeight
           player.homeX = rodX
+          player.kickAngle = 0
+          player.charge = 0
           player.isKicking = false
+          player.isCharging = false
+          player.chargeTween = null
+          player.kickTween = null
           playerObjects.push(player)
         })
 
@@ -317,12 +325,6 @@ function FoosballTable() {
       })
     }
 
-    function getKickLevel(triggerValue) {
-      if (triggerValue < 0.2) return 0
-      if (triggerValue < 0.6) return 1
-      return 2
-    }
-
     function update() {
 
       const pads = navigator.getGamepads()
@@ -369,22 +371,61 @@ function FoosballTable() {
         if (this.attackRod && Math.abs(rightY)>deadzone) moveRod(this.attackRod,rightY*speed)
       }
 
-      // charged kick STILL NEEDS CHANGED - BACKSWING
-      const leftKickLevel = getKickLevel(ltValue)
-      const rightKickLevel = getKickLevel(rtValue)
+      // charged shooting kick STILL NEEDS CHANGED - BACKSWING
+      const leftCharging = ltValue > 0.2
+      const rightCharging = rtValue > 0.2
 
-      let kickDirection = null
-      if (bJustPressed) kickDirection="right"
+      let leftRod = this.controlMode==="defence" ? this.leftGoalieRod : this.midfieldRod
+      let rightRod = this.controlMode==="defence" ? this.leftDefenderRod : this.attackRod
 
-      if (kickDirection) {
-        if (leftKickLevel>0) {
-          let rod = this.controlMode==="defence" ? this.leftGoalieRod : this.midfieldRod
-          if (rod) kickRod(this, rod.elements.filter(el=>el.originalWidth), leftKickLevel, kickDirection, 0)
+      // left trigger
+      if (leftCharging && !this.leftChargeLocked) {
+        if (leftRod) chargeRod(this, leftRod.elements.filter(el=>el.originalWidth), ltValue)
+      }
+
+      if (!leftCharging) {
+        this.leftChargeLocked = false
+
+        if (leftRod) {
+          const players = leftRod.elements.filter(el => el.originalWidth)
+          releaseCharge(players)
         }
-        if (rightKickLevel>0) {
-          let rod = this.controlMode==="defence" ? this.leftDefenderRod : this.attackRod
-          if (rod) kickRod(this, rod.elements.filter(el=>el.originalWidth), rightKickLevel, kickDirection, 0)
+      }
+
+      // right trigger
+      if (rightCharging && !this.rightChargeLocked) {
+        if (rightRod) chargeRod(this, rightRod.elements.filter(el=>el.originalWidth), rtValue)
+      }
+
+      if (!rightCharging) {
+        this.rightChargeLocked = false
+
+        if (rightRod) {
+          const players = rightRod.elements.filter(el => el.originalWidth)
+          releaseCharge(players)
         }
+      }
+
+      if (bJustPressed) {
+
+        if (leftRod && leftCharging) {
+          const players = leftRod.elements.filter(el=>el.originalWidth)
+
+          releaseCharge(players)
+          kickRod(this, players, 2, "right", 0)
+
+          this.leftChargeLocked = true
+        }
+
+        if (rightRod && rightCharging) {
+          const players = rightRod.elements.filter(el=>el.originalWidth)
+
+          releaseCharge(players)
+          kickRod(this, players, 2, "right", 0)
+
+          this.rightChargeLocked = true
+        }
+
       }
 
       // short pass LB RB

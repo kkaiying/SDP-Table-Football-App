@@ -50,10 +50,14 @@ export function kickRod(scene, players, level = 1, direction = 'right', rodId) {
   players.forEach(player => {
     if (player.isKicking) return
     player.isKicking = true
+    if (player.chargeTween) {
+      player.chargeTween.stop()
+      player.chargeTween = null
+    }
 
     sendKickCommand(rodId, level, direction)
 
-    scene.tweens.add({
+    player.kickTween = scene.tweens.add({
       targets: player, // rectangle animated
       displayWidth: player.originalHeight * power.widthMultiplier, // visually widens player
       x: player.homeX + (kickSign * power.kickDistance), // right or left kick
@@ -65,7 +69,56 @@ export function kickRod(scene, players, level = 1, direction = 'right', rodId) {
         player.x = player.homeX
         player.displayWidth = player.originalWidth // restore original size
         player.isKicking = false
+        player.isCharging = false
       }
     })
+  })
+}
+
+export function chargeRod(scene, players, triggerValue) {
+
+  const maxWidthMultiplier = 1.3
+  const smoothSpeed = 0.1   // lower = smoother, higher = faster
+
+  players.forEach(player => {
+
+    if (player.isKicking) return
+
+    const raw = Phaser.Math.Clamp(triggerValue, 0, 1)
+    const strength = raw * raw
+
+    const targetWidth =
+      player.originalHeight *
+      (1 + (maxWidthMultiplier - 1) * strength)
+
+    // Smoothly move current width toward target
+    const newWidth = Phaser.Math.Linear(
+      player.displayWidth,
+      targetWidth,
+      smoothSpeed
+    )
+
+    const offset = (newWidth - player.originalWidth) / 2
+
+    player.displayWidth = newWidth
+    player.x = player.homeX - offset
+
+    player.isCharging = strength > 0
+  })
+}
+
+export function releaseCharge(players) {
+
+  players.forEach(player => {
+
+    if (player.chargeTween) {
+      player.chargeTween.stop()
+      player.chargeTween = null
+    }
+
+    player.x = player.homeX
+    player.displayWidth = player.originalWidth
+    player.isCharging = false
+
   })
 }
