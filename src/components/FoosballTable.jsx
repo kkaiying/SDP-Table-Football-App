@@ -35,6 +35,10 @@ function FoosballTable() {
       this.prevDpadLeft = false
       this.prevDpadRight = false
 
+      // rod configurations
+      this.selectedRod = null
+      this.rodMap = {}
+
       // dimensions for components in the table
       const canvasWidth = this.scale.width
       const canvasHeight = this.scale.height
@@ -208,40 +212,22 @@ function FoosballTable() {
 
         // assign rods
         const offsets = rodElements.map(el => el.y - rodHitbox.y)
-        if (i===1) this.leftGoalieRod = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
-        if (i===2) this.leftDefenderRod = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
-        if (i===4) this.midfieldRod = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
-        if (i===6) this.attackRod = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
-
-        rodSliding(this, rodHitbox, rodElements, { tableTopEdge, tableBottomEdge, tableCenterY, playerHeight, rodId: i })
-
-        // per rod scroll state
-        rodHitbox.scrollCount = 0 // count of wheel events
-        rodHitbox.scrollTimer = null // timer to reset count and trigger kick
-
-        rodHitbox.on('wheel', (pointer, dx, dy) => {
-          rodHitbox.scrollCount += 1
-
-          // store last scroll direction
-          rodHitbox.lastScrollDirection = dy<0 ? 'right':'left'
-
-          if (rodHitbox.scrollTimer) rodHitbox.scrollTimer.remove(false)
-          
-          // make sure scrolling is finished
-            rodHitbox.scrollTimer = this.time.delayedCall(120, () => {
-            let level
-
-            // scroll speed determines kick level - faster scrol = stronger kick
-            if (rodHitbox.scrollCount <= 2) level = 1
-            else if (rodHitbox.scrollCount <= 4) level = 2
-            else level = 3
-
-            kickRod(this, playerObjects, level, rodHitbox.lastScrollDirection, i)
-            
-            rodHitbox.scrollCount = 0
-            rodHitbox.scrollTimer = null
-          })
-        })
+        if (i===1) {
+          this.leftGoalieRod = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
+          this.rodMap[1] = this.leftGoalieRod
+        } 
+        if (i===2) {
+          this.leftDefenderRod = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
+          this.rodMap[2] = this.leftDefenderRod
+        } 
+        if (i===4) {
+          this.midfieldRod = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
+          this.rodMap[3] = this.midfieldRod
+        } 
+        if (i===6) {
+          this.attackRod = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
+          this.rodMap[4] = this.attackRod
+        } 
       }
 
       // left goal
@@ -250,8 +236,65 @@ function FoosballTable() {
       // right goal
       this.add.rectangle(tableRightEdge, tableCenterY, 20, tableHeight/3, 0xffffff).setStrokeStyle(2,0x000000)
 
-      setRodHighlight(this.leftGoalieRod, true)
-      setRodHighlight(this.leftDefenderRod, true)
+      // keyboard event listeners for rod selection
+      this.input.keyboard.on('keydown-ONE', () => {
+        if (this.selectedRod === this.rodMap[1]) {
+          setRodHighlight(this.selectedRod, false)
+          this.selectedRod = null
+        } else {
+          if (this.selectedRod) setRodHighlight(this.selectedRod, false)
+          this.selectedRod = this.rodMap[1]
+          setRodHighlight(this.selectedRod, true)
+        }
+      })
+
+      this.input.keyboard.on('keydown-TWO', () => {
+        if (this.selectedRod === this.rodMap[2]) {
+          setRodHighlight(this.selectedRod, false)
+          this.selectedRod = null
+        } else {
+          if (this.selectedRod) setRodHighlight(this.selectedRod, false)
+          this.selectedRod = this.rodMap[2]
+          setRodHighlight(this.selectedRod, true)
+        }
+      })
+
+      this.input.keyboard.on('keydown-THREE', () => {
+        if (this.selectedRod === this.rodMap[3]) {
+          setRodHighlight(this.selectedRod, false)
+          this.selectedRod = null
+        } else {
+          if (this.selectedRod) setRodHighlight(this.selectedRod, false)
+          this.selectedRod = this.rodMap[3]
+          setRodHighlight(this.selectedRod, true)
+        }
+      })
+
+      this.input.keyboard.on('keydown-FOUR', () => {
+        if (this.selectedRod === this.rodMap[4]) {
+          setRodHighlight(this.selectedRod, false)
+          this.selectedRod = null
+        } else {
+          if (this.selectedRod) setRodHighlight(this.selectedRod, false)
+          this.selectedRod = this.rodMap[4]
+          setRodHighlight(this.selectedRod, true)
+        }
+      })
+
+      this.input.on('pointermove', (pointer) => {
+        if (this.selectedRod) {
+          const delta = pointer.y - pointer.prevPosition.y
+          if (delta !== 0) moveRod(this.selectedRod, delta)
+        }
+      })
+
+      this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
+        if (this.selectedRod) {
+          const players = this.selectedRod.elements.filter(el => el.originalWidth)
+          const direction = deltaY < 0 ? 'right' : 'left'
+          kickRod(this, players, 1, direction, this.selectedRod.rodId)
+        }
+      })
     }
     
     function update() {
