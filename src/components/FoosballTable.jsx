@@ -253,78 +253,7 @@ function FoosballTable() {
       setRodHighlight(this.leftGoalieRod, true)
       setRodHighlight(this.leftDefenderRod, true)
     }
-
-    // function moveRod(rodData, delta) {
-    //   const { hitbox, elements, offsets, tableTopEdge, tableBottomEdge } = rodData
-
-    //   // get player rectangles only
-    //   const players = elements.filter(el => el.displayHeight && el.displayHeight < 50)
-
-    //   const isGoalkeeper = players.length === 1
-
-    //   const topPlayerY = Math.min(...players.map(el => el.y))
-    //   const bottomPlayerY = Math.max(...players.map(el => el.y))
-
-    //   const topDistance = hitbox.y - topPlayerY
-    //   const bottomDistance = bottomPlayerY - hitbox.y
-
-    //   const padding = isGoalkeeper ? 205 : (players[0].displayHeight / 2)
-
-    //   const minY = tableTopEdge + topDistance + padding
-    //   const maxY = tableBottomEdge - bottomDistance - padding
-
-    //   hitbox.y = Phaser.Math.Clamp(hitbox.y + delta, minY, maxY)
-
-    //   elements.forEach((element, index) => {
-    //     element.y = hitbox.y + offsets[index]
-    //   })
-    // }
-
-    // function switchMode(targetMode = null) {
-
-    //   const newMode =
-    //     targetMode ??
-    //     (this.controlMode === "defence" ? "attack" : "defence")
-
-    //   if (newMode === this.controlMode) return
-
-    //   if (newMode === "attack") {
-
-    //     setRodHighlight(this.leftGoalieRod, false)
-    //     setRodHighlight(this.leftDefenderRod, false)
-
-    //     setRodHighlight(this.midfieldRod, true)
-    //     setRodHighlight(this.attackRod, true)
-
-    //   } else {
-
-    //     setRodHighlight(this.midfieldRod, false)
-    //     setRodHighlight(this.attackRod, false)
-
-    //     setRodHighlight(this.leftGoalieRod, true)
-    //     setRodHighlight(this.leftDefenderRod, true)
-
-    //   }
-
-    //   this.controlMode = newMode
-    // }
-
-
-    // highlight selected rod pairs
-    // function setRodHighlight(rodData, active) {
-    //   if (!rodData) return
-
-    //   const players = rodData.elements.filter(el => el.originalWidth)
-
-    //   players.forEach(player => {
-    //     if (active) {
-    //       player.setStrokeStyle(3, 0x000000) // 0x00ffcc for "glow"
-    //     } else {
-    //       player.setStrokeStyle(0)
-    //     }
-    //   })
-    // }
-
+    
     function update() {
 
       const pads = navigator.getGamepads()
