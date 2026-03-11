@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import Phaser from 'phaser'
 import './FoosballTable.css'
-import { rodSliding, kickRod, chargeRod, releaseCharge} from './foosballControls'
+import { rodSliding, switchMode, setRodHighlight, kickRod, moveRod, chargeRod, releaseCharge} from './foosballControls'
 import { connectToServer } from '../utils/websocket'
 
 function FoosballTable() {
@@ -208,10 +208,10 @@ function FoosballTable() {
 
         // assign rods
         const offsets = rodElements.map(el => el.y - rodHitbox.y)
-        if (i===1) this.leftGoalieRod = { hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
-        if (i===2) this.leftDefenderRod = { hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
-        if (i===4) this.midfieldRod = { hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
-        if (i===6) this.attackRod = { hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
+        if (i===1) this.leftGoalieRod = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
+        if (i===2) this.leftDefenderRod = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
+        if (i===4) this.midfieldRod = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
+        if (i===6) this.attackRod = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
 
         rodSliding(this, rodHitbox, rodElements, { tableTopEdge, tableBottomEdge, tableCenterY, playerHeight, rodId: i })
 
@@ -254,76 +254,76 @@ function FoosballTable() {
       setRodHighlight(this.leftDefenderRod, true)
     }
 
-    function moveRod(rodData, delta) {
-      const { hitbox, elements, offsets, tableTopEdge, tableBottomEdge } = rodData
+    // function moveRod(rodData, delta) {
+    //   const { hitbox, elements, offsets, tableTopEdge, tableBottomEdge } = rodData
 
-      // get player rectangles only
-      const players = elements.filter(el => el.displayHeight && el.displayHeight < 50)
+    //   // get player rectangles only
+    //   const players = elements.filter(el => el.displayHeight && el.displayHeight < 50)
 
-      const isGoalkeeper = players.length === 1
+    //   const isGoalkeeper = players.length === 1
 
-      const topPlayerY = Math.min(...players.map(el => el.y))
-      const bottomPlayerY = Math.max(...players.map(el => el.y))
+    //   const topPlayerY = Math.min(...players.map(el => el.y))
+    //   const bottomPlayerY = Math.max(...players.map(el => el.y))
 
-      const topDistance = hitbox.y - topPlayerY
-      const bottomDistance = bottomPlayerY - hitbox.y
+    //   const topDistance = hitbox.y - topPlayerY
+    //   const bottomDistance = bottomPlayerY - hitbox.y
 
-      const padding = isGoalkeeper ? 205 : (players[0].displayHeight / 2)
+    //   const padding = isGoalkeeper ? 205 : (players[0].displayHeight / 2)
 
-      const minY = tableTopEdge + topDistance + padding
-      const maxY = tableBottomEdge - bottomDistance - padding
+    //   const minY = tableTopEdge + topDistance + padding
+    //   const maxY = tableBottomEdge - bottomDistance - padding
 
-      hitbox.y = Phaser.Math.Clamp(hitbox.y + delta, minY, maxY)
+    //   hitbox.y = Phaser.Math.Clamp(hitbox.y + delta, minY, maxY)
 
-      elements.forEach((element, index) => {
-        element.y = hitbox.y + offsets[index]
-      })
-    }
+    //   elements.forEach((element, index) => {
+    //     element.y = hitbox.y + offsets[index]
+    //   })
+    // }
 
-    function switchMode(targetMode = null) {
+    // function switchMode(targetMode = null) {
 
-      const newMode =
-        targetMode ??
-        (this.controlMode === "defence" ? "attack" : "defence")
+    //   const newMode =
+    //     targetMode ??
+    //     (this.controlMode === "defence" ? "attack" : "defence")
 
-      if (newMode === this.controlMode) return
+    //   if (newMode === this.controlMode) return
 
-      if (newMode === "attack") {
+    //   if (newMode === "attack") {
 
-        setRodHighlight(this.leftGoalieRod, false)
-        setRodHighlight(this.leftDefenderRod, false)
+    //     setRodHighlight(this.leftGoalieRod, false)
+    //     setRodHighlight(this.leftDefenderRod, false)
 
-        setRodHighlight(this.midfieldRod, true)
-        setRodHighlight(this.attackRod, true)
+    //     setRodHighlight(this.midfieldRod, true)
+    //     setRodHighlight(this.attackRod, true)
 
-      } else {
+    //   } else {
 
-        setRodHighlight(this.midfieldRod, false)
-        setRodHighlight(this.attackRod, false)
+    //     setRodHighlight(this.midfieldRod, false)
+    //     setRodHighlight(this.attackRod, false)
 
-        setRodHighlight(this.leftGoalieRod, true)
-        setRodHighlight(this.leftDefenderRod, true)
+    //     setRodHighlight(this.leftGoalieRod, true)
+    //     setRodHighlight(this.leftDefenderRod, true)
 
-      }
+    //   }
 
-      this.controlMode = newMode
-    }
+    //   this.controlMode = newMode
+    // }
 
 
     // highlight selected rod pairs
-    function setRodHighlight(rodData, active) {
-      if (!rodData) return
+    // function setRodHighlight(rodData, active) {
+    //   if (!rodData) return
 
-      const players = rodData.elements.filter(el => el.originalWidth)
+    //   const players = rodData.elements.filter(el => el.originalWidth)
 
-      players.forEach(player => {
-        if (active) {
-          player.setStrokeStyle(3, 0x000000) // 0x00ffcc for "glow"
-        } else {
-          player.setStrokeStyle(0)
-        }
-      })
-    }
+    //   players.forEach(player => {
+    //     if (active) {
+    //       player.setStrokeStyle(3, 0x000000) // 0x00ffcc for "glow"
+    //     } else {
+    //       player.setStrokeStyle(0)
+    //     }
+    //   })
+    // }
 
     function update() {
 
@@ -371,7 +371,7 @@ function FoosballTable() {
         if (this.attackRod && Math.abs(rightY)>deadzone) moveRod(this.attackRod,rightY*speed)
       }
 
-      // charged shooting kick STILL NEEDS CHANGED - BACKSWING
+      // charged shooting kick
       const leftCharging = ltValue > 0.2
       const rightCharging = rtValue > 0.2
 
@@ -379,7 +379,7 @@ function FoosballTable() {
       let rightRod = this.controlMode==="defence" ? this.leftDefenderRod : this.attackRod
 
       // left trigger
-      if (leftCharging && !this.leftChargeLocked) {
+      if (leftCharging && !this.leftChargeLocked && ltValue !== this.prevLT) {
         if (leftRod) chargeRod(this, leftRod.elements.filter(el=>el.originalWidth), ltValue)
       }
 
@@ -393,7 +393,7 @@ function FoosballTable() {
       }
 
       // right trigger
-      if (rightCharging && !this.rightChargeLocked) {
+      if (rightCharging && !this.rightChargeLocked && rtValue !== this.prevRT) {
         if (rightRod) chargeRod(this, rightRod.elements.filter(el=>el.originalWidth), rtValue)
       }
 
@@ -412,7 +412,7 @@ function FoosballTable() {
           const players = leftRod.elements.filter(el=>el.originalWidth)
 
           releaseCharge(players)
-          kickRod(this, players, 2, "right", 0)
+          kickRod(this, players, 2, "right", leftRod.rodId)
 
           this.leftChargeLocked = true
         }
@@ -421,7 +421,7 @@ function FoosballTable() {
           const players = rightRod.elements.filter(el=>el.originalWidth)
 
           releaseCharge(players)
-          kickRod(this, players, 2, "right", 0)
+          kickRod(this, players, 2, "right", rightRod.rodId)
 
           this.rightChargeLocked = true
         }
@@ -431,11 +431,11 @@ function FoosballTable() {
       // short pass LB RB
       if (lbJustPressed) {
         let rod = this.controlMode==="defence" ? this.leftGoalieRod : this.midfieldRod
-        if (rod) kickRod(this, rod.elements.filter(el=>el.originalWidth), 1, "right", 0)
+        if (rod) kickRod(this, rod.elements.filter(el=>el.originalWidth), 1, "right", rod.rodId)
       }
       if (rbJustPressed) {
         let rod = this.controlMode==="defence" ? this.leftDefenderRod : this.attackRod
-        if (rod) kickRod(this, rod.elements.filter(el=>el.originalWidth), 1, "right", 0)
+        if (rod) kickRod(this, rod.elements.filter(el=>el.originalWidth), 1, "right", rod.rodId)
       }
 
       // update states
