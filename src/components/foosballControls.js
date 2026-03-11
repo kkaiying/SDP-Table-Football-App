@@ -38,23 +38,69 @@ export function rodSliding(scene, rodHitbox, rodElements, constraints) {
 
 }
 
+export function switchMode(targetMode = null) {
+
+  const newMode =
+    targetMode ??
+    (this.controlMode === "defence" ? "attack" : "defence")
+
+  if (newMode === this.controlMode) return
+
+  if (newMode === "attack") {
+
+    setRodHighlight(this.leftGoalieRod, false)
+    setRodHighlight(this.leftDefenderRod, false)
+
+    setRodHighlight(this.midfieldRod, true)
+    setRodHighlight(this.attackRod, true)
+
+  } else {
+
+    setRodHighlight(this.midfieldRod, false)
+    setRodHighlight(this.attackRod, false)
+
+    setRodHighlight(this.leftGoalieRod, true)
+    setRodHighlight(this.leftDefenderRod, true)
+
+  }
+
+  this.controlMode = newMode
+}
+
+export function setRodHighlight(rodData, active) {
+  if (!rodData) return
+
+  const players = rodData.elements.filter(el => el.originalWidth)
+
+  players.forEach(player => {
+    if (active) {
+      player.setStrokeStyle(3, 0x000000) // 0x00ffcc for "glow"
+    } else {
+      player.setStrokeStyle(0)
+    }
+  })
+}
+
 export function kickRod(scene, players, level = 1, direction = 'right', rodId) {
   const powerByLevel = {
-    1: { widthMultiplier: 1.2, kickDistance: 6, duration: 110 },
-    2: { widthMultiplier: 1.4, kickDistance: 12, duration: 90 },
-    3: { widthMultiplier: 1.7, kickDistance: 20, duration: 70 }
+    1: { widthMultiplier: 1.2, kickDistance: 6, duration: 110 },  // short pass
+    2: { widthMultiplier: 1.7, kickDistance: 20, duration: 70 }   // strong kick
   }
 
   const power = powerByLevel[level] || powerByLevel[1]
-  const kickSign = direction === 'right' ? 1 : -1 // right = +1, left = -1
+  const kickSign = 1
 
   players.forEach(player => {
     if (player.isKicking) return
     player.isKicking = true
+    if (player.chargeTween) {
+      player.chargeTween.stop()
+      player.chargeTween = null
+    }
 
     sendKickCommand(rodId, level, direction)
 
-    scene.tweens.add({
+    player.kickTween = scene.tweens.add({
       targets: player, // rectangle animated
       displayWidth: player.originalHeight * power.widthMultiplier, // visually widens player
       x: player.homeX + (kickSign * power.kickDistance), // right or left kick
@@ -66,7 +112,87 @@ export function kickRod(scene, players, level = 1, direction = 'right', rodId) {
         player.x = player.homeX
         player.displayWidth = player.originalWidth // restore original size
         player.isKicking = false
+        player.isCharging = false
       }
     })
+  })
+}
+
+export function moveRod(rodData, delta) {
+  const { hitbox, elements, offsets, tableTopEdge, tableBottomEdge } = rodData
+
+  // get player rectangles only
+  const players = elements.filter(el => el.displayHeight && el.displayHeight < 50)
+
+  const isGoalkeeper = players.length === 1
+
+  const topPlayerY = Math.min(...players.map(el => el.y))
+  const bottomPlayerY = Math.max(...players.map(el => el.y))
+
+  const topDistance = hitbox.y - topPlayerY
+  const bottomDistance = bottomPlayerY - hitbox.y
+
+  const padding = isGoalkeeper ? 205 : (players[0].displayHeight / 2)
+
+  const minY = tableTopEdge + topDistance + padding
+  const maxY = tableBottomEdge - bottomDistance - padding
+
+  hitbox.y = Phaser.Math.Clamp(hitbox.y + delta, minY, maxY)
+
+  elements.forEach((element, index) => {
+    element.y = hitbox.y + offsets[index]
+  })
+
+  if (rodData.rodId !== undefined) {
+    sendSlideCommand(rodData.rodId, hitbox.y)
+  }
+}
+
+export function chargeRod(scene, players, triggerValue) {
+
+  const maxWidthMultiplier = 1.3
+  const smoothSpeed = 0.1
+
+  players.forEach(player => {
+
+    if (player.isKicking) return   // already exists
+
+    const raw = Phaser.Math.Clamp(triggerValue, 0, 1)
+    const strength = raw * raw
+
+    const targetWidth =
+      player.originalHeight *
+      (1 + (maxWidthMultiplier - 1) * strength)
+
+    const newWidth = Phaser.Math.Linear(
+      player.displayWidth,
+      targetWidth,
+      smoothSpeed
+    )
+
+    const offset = (newWidth - player.originalWidth) / 2
+
+    player.displayWidth = newWidth
+    player.x = player.homeX - offset
+
+    player.isCharging = strength > 0
+  })
+}
+
+export function releaseCharge(players) {
+
+  players.forEach(player => {
+
+    if (player.isKicking) return
+
+    if (player.chargeTween) {
+      player.chargeTween.stop()
+      player.chargeTween = null
+    }
+
+    player.x = player.homeX
+    player.displayWidth = player.originalWidth
+    player.isCharging = false
+
   })
 }
