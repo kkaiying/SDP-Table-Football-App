@@ -12,9 +12,9 @@
 
 .homeTitle {
   position: absolute;
-  top: 150px;           /* Distance from the top of the page */
-  left: 50%;            /* Center horizontally */
-  transform: translateX(-50%); /* Adjust for perfect centering */
+  top: 150px;
+  left: 50%; 
+  transform: translateX(-50%);
   font-size: 100px;
   white-space: nowrap;
 }

@@ -9,8 +9,8 @@ function FoosballTable() {
     const ws = connectToServer()
     const config = {
       type: Phaser.AUTO,
-      width: 1400,
-      height: 700,
+      width: '100%',
+      height: '100%',
       parent: 'foosball-table',
       transparent: true,
       input: { mouse: { wheel: true } },
@@ -39,25 +39,30 @@ function FoosballTable() {
       this.selectedRod = null
       this.rodMap = {}
 
+      // real table dimensions
+      const realTableHeight = 48.5
+      const realTableWidth = 81
+      const tableAspectRatio = realTableWidth / realTableHeight
+
       // dimensions for components in the table
       const canvasWidth = this.scale.width
       const canvasHeight = this.scale.height
       const tableCenterX = canvasWidth / 2
-      const tableWidth = canvasWidth * 0.857
-      const tableHeight = canvasHeight * 0.714
+      const tableWidth = canvasWidth * 0.7
+      const tableHeight = tableWidth / tableAspectRatio
       const tableCenterY = canvasHeight / 2
-      const tableLeftEdge = tableCenterX - tableWidth/2
-      const tableRightEdge = tableCenterX + tableWidth/2
-      const tableTopEdge = tableCenterY - tableHeight/2
-      const tableBottomEdge = tableCenterY + tableHeight/2
+      const tableLeftEdge = tableCenterX - tableWidth / 2
+      const tableRightEdge = tableCenterX + tableWidth / 2
+      const tableTopEdge = tableCenterY - tableHeight / 2
+      const tableBottomEdge = tableCenterY + tableHeight / 2
       const canvasTop = 0
-      const betweenCanvasAndTableTop = (canvasTop + tableTopEdge)/2
-      const betweenCanvasAndTableBottom = (canvasHeight + tableBottomEdge)/2
+      const betweenCanvasAndTableTop = (canvasTop + tableTopEdge) / 2
+      const betweenCanvasAndTableBottom = (canvasHeight + tableBottomEdge) / 2
       const numOfRods = 8
       const rodSpacing = tableWidth / (numOfRods+1)
       const playerRods = [1,2,4,6]
       const handleWidth = 30
-      const ballRadius = tableWidth * 0.01
+      const ballRadius = tableWidth * 0.02
       const circleMarkerRadius = rodSpacing
 
       // goal markings
@@ -128,14 +133,14 @@ function FoosballTable() {
           .setStrokeStyle(2, tableMarkings).setFillStyle(tableColour)
 
       // markings on table
-      this.add.rectangle(tableLeftEdge + bigGoalWidth/2, tableCenterY, bigGoalWidth, bigGoalHeight)
+      this.add.rectangle(tableLeftEdge + bigGoalWidth / 2, tableCenterY, bigGoalWidth, bigGoalHeight)
         .setStrokeStyle(2, tableMarkings).setFillStyle(tableColour, 0)
       // goal markings
-        this.add.rectangle(tableRightEdge - bigGoalWidth/2, tableCenterY, bigGoalWidth, bigGoalHeight)
+        this.add.rectangle(tableRightEdge - bigGoalWidth / 2, tableCenterY, bigGoalWidth, bigGoalHeight)
         .setStrokeStyle(2, tableMarkings).setFillStyle(tableColour, 0)
-      this.add.rectangle(tableLeftEdge + smallGoalWidth/2, tableCenterY, smallGoalWidth, smallGoalHeight)
+      this.add.rectangle(tableLeftEdge + smallGoalWidth / 2, tableCenterY, smallGoalWidth, smallGoalHeight)
         .setStrokeStyle(2, tableMarkings).setFillStyle(tableColour, 0)
-      this.add.rectangle(tableRightEdge - smallGoalWidth/2, tableCenterY, smallGoalWidth, smallGoalHeight)
+      this.add.rectangle(tableRightEdge - smallGoalWidth / 2, tableCenterY, smallGoalWidth, smallGoalHeight)
         .setStrokeStyle(2, tableMarkings).setFillStyle(tableColour, 0)
 
       const leftSemiCircle = this.add.graphics()
@@ -172,24 +177,24 @@ function FoosballTable() {
         let handle
         if (playerRods.includes(i)) {
           const handleHeight = canvasHeight - betweenCanvasAndTableBottom
-          const handleCenterY = (betweenCanvasAndTableBottom + canvasHeight)/2
+          const handleCenterY = (betweenCanvasAndTableBottom + canvasHeight) / 2
           handle = this.add.rectangle(rodX, handleCenterY, handleWidth, handleHeight, handleColour)
         } else {
           const handleHeight = betweenCanvasAndTableTop - canvasTop
-          const handleCenterY = (canvasTop + betweenCanvasAndTableTop)/2
+          const handleCenterY = (canvasTop + betweenCanvasAndTableTop) / 2
           handle = this.add.rectangle(rodX, handleCenterY, handleWidth, handleHeight, handleColour)
         }
 
         // make the players
         const rodHeight = tableHeight
-        const boxHeight = rodHeight/21
-        const playerWidth = tableWidth*0.01
-        const playerHeight = boxHeight*1.3
+        const boxHeight = rodHeight / 21
+        const playerWidth = tableWidth * 0.015
+        const playerHeight = boxHeight * 1.3
         const playerConfig = football_players[i]
         const playerObjects = []
 
         playerConfig.positions.forEach(boxNum => {
-          const playerCenterY = tableTopEdge + boxHeight*(boxNum-0.5)
+          const playerCenterY = tableTopEdge + boxHeight * (boxNum - 0.5)
           const player = this.add.rectangle(rodX, playerCenterY, playerWidth, playerHeight, playerConfig.colour)
           player.originalWidth = playerWidth
           player.originalHeight = playerHeight
@@ -231,12 +236,12 @@ function FoosballTable() {
       }
 
       // left goal
-      this.add.rectangle(tableLeftEdge, tableCenterY, 20, tableHeight/3, 0xffffff).setStrokeStyle(2,0x000000)
+      this.add.rectangle(tableLeftEdge, tableCenterY, 20, tableHeight * 0.165, 0xffffff).setStrokeStyle(2,0x000000)
       
       // right goal
-      this.add.rectangle(tableRightEdge, tableCenterY, 20, tableHeight/3, 0xffffff).setStrokeStyle(2,0x000000)
+      this.add.rectangle(tableRightEdge, tableCenterY, 20, tableHeight * 0.165, 0xffffff).setStrokeStyle(2,0x000000)
 
-      // keyboard event listeners for rod selection
+      // rod selection
       this.input.keyboard.on('keydown-ONE', () => {
         if (this.selectedRod === this.rodMap[1]) {
           setRodHighlight(this.selectedRod, false)
@@ -288,11 +293,30 @@ function FoosballTable() {
         }
       })
 
-      this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
+      this.selectedRodScrollCount = 0
+      this.selectedRodScrollTimer = null
+
+      this.input.on('wheel', (pointer, gameObjects, deltaX, deltaY) => {
         if (this.selectedRod) {
-          const players = this.selectedRod.elements.filter(el => el.originalWidth)
+          this.selectedRodScrollCount += 1
+
           const direction = deltaY < 0 ? 'right' : 'left'
-          kickRod(this, players, 1, direction, this.selectedRod.rodId)
+          this.selectedRodLastScrollDirection = direction
+
+          if (this.selectedRodScrollTimer) this.selectedRodScrollTimer.remove(false)
+
+          this.selectedRodScrollTimer = this.time.delayedCall(120, () => {
+            let level
+        
+            if (this.selectedRodScrollCount <= 2) level = 1  
+            else level = 2
+        
+            const players = this.selectedRod.elements.filter(el => el.originalWidth)
+            kickRod(this, players, level, this.selectedRodLastScrollDirection, this.selectedRod.rodId)
+        
+            this.selectedRodScrollCount = 0
+            this.selectedRodScrollTimer = null
+          })
         }
       })
     }

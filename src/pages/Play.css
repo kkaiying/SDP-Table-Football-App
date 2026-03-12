@@ -63,7 +63,7 @@
 
 .imageContainer {
   top: 75px;
-  bottom: 115px;
+  bottom: 0px;
   left: 0px; /* might want to change these? */
   right: 0px;
   position: absolute;
