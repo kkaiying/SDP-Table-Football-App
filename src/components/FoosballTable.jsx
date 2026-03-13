@@ -3,8 +3,10 @@ import Phaser from 'phaser'
 import './FoosballTable.css'
 import { rodSliding, switchMode, setRodHighlight, kickRod, moveRod, chargeRod, releaseCharge} from './foosballControls'
 import { connectToServer } from '../utils/websocket'
+import { useKeybinds } from './KeybindContext'
 
 function FoosballTable() {
+  const { keybinds } = useKeybinds()
   useEffect(() => {
     const ws = connectToServer()
     const config = {
@@ -18,7 +20,7 @@ function FoosballTable() {
     }
 
     function create() {
-
+      this.keybinds = keybinds
       // "defence" = rods 1 & 2
       // "attack"  = rods 4 & 6
       this.controlMode = "defence"
@@ -242,48 +244,23 @@ function FoosballTable() {
       this.add.rectangle(tableRightEdge, tableCenterY, 20, tableHeight * 0.165, 0xffffff).setStrokeStyle(2,0x000000)
 
       // rod selection
-      this.input.keyboard.on('keydown-ONE', () => {
-        if (this.selectedRod === this.rodMap[1]) {
+      const selectRod = (rodNumber) => {
+        const targetRod = this.rodMap[rodNumber]
+        if (this.selectedRod === targetRod) {
           setRodHighlight(this.selectedRod, false)
           this.selectedRod = null
         } else {
           if (this.selectedRod) setRodHighlight(this.selectedRod, false)
-          this.selectedRod = this.rodMap[1]
+          this.selectedRod = targetRod
           setRodHighlight(this.selectedRod, true)
         }
-      })
+      }
 
-      this.input.keyboard.on('keydown-TWO', () => {
-        if (this.selectedRod === this.rodMap[2]) {
-          setRodHighlight(this.selectedRod, false)
-          this.selectedRod = null
-        } else {
-          if (this.selectedRod) setRodHighlight(this.selectedRod, false)
-          this.selectedRod = this.rodMap[2]
-          setRodHighlight(this.selectedRod, true)
-        }
-      })
-
-      this.input.keyboard.on('keydown-THREE', () => {
-        if (this.selectedRod === this.rodMap[3]) {
-          setRodHighlight(this.selectedRod, false)
-          this.selectedRod = null
-        } else {
-          if (this.selectedRod) setRodHighlight(this.selectedRod, false)
-          this.selectedRod = this.rodMap[3]
-          setRodHighlight(this.selectedRod, true)
-        }
-      })
-
-      this.input.keyboard.on('keydown-FOUR', () => {
-        if (this.selectedRod === this.rodMap[4]) {
-          setRodHighlight(this.selectedRod, false)
-          this.selectedRod = null
-        } else {
-          if (this.selectedRod) setRodHighlight(this.selectedRod, false)
-          this.selectedRod = this.rodMap[4]
-          setRodHighlight(this.selectedRod, true)
-        }
+      this.input.keyboard.on('keydown', (event) => {
+        if (event.key === this.keybinds.rod1) selectRod(1)
+        else if (event.key === this.keybinds.rod2) selectRod(2)
+        else if (event.key === this.keybinds.rod3) selectRod(3)
+        else if (event.key === this.keybinds.rod4) selectRod(4)
       })
 
       this.input.on('pointermove', (pointer) => {
