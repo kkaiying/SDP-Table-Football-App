@@ -1,18 +1,27 @@
 import { useNavigate } from "react-router-dom";
+import { IoSettingsSharp } from 'react-icons/io5'
+import { IoMdHelpCircle } from 'react-icons/io'
 import "./Homepage.css";
+import SettingsModal from "../components/Settings";
+import { useState } from "react";
 
 export default function Homepage() {
   const navigate = useNavigate();
+  const [showSettings, setShowSettings] = useState(false);
 
   return (
     <div className = "home">
-      <h1 className = "homeTitle">Remote Foosball Opponent</h1>
       <button className = "playButton" onClick={() => navigate("/play")}>
-        Play
+        PLAY
       </button>
-      <button className = "howToPlayButton" onClick={() => navigate("/howtoplay")}>
-        How to Play
+      <button className = "tutorialButton" onClick={() => navigate("/howtoplay")}>
+        <IoMdHelpCircle/>
       </button>
+      <button className="settingsButton" onClick={() => setShowSettings(true)}>
+        <IoSettingsSharp/>
+      </button>
+
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)}/>}
     </div>
   );
 }

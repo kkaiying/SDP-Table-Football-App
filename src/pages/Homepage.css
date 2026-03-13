@@ -1,4 +1,18 @@
-.home {
+@font-face {
+  font-family: 'Marykate';
+  src: url('/public/fonts/Marykate.otf') format('opentype');
+  font-family: 'BrickSans';
+  src: url('/public/fonts/BrickSans.otf') format('opentype')
+}
+
+:root {
+  --red: #b2000a;
+  --yellow: #ffc704;
+  --white: #ffffff;
+  --green: #004d00
+}
+
+/* .home {
   min-height: 100vh;
   min-width: 100vw;
   display: flex;
@@ -8,7 +22,35 @@
   font-family: "Century Gothic", sans-serif;
   background-color: #3C9858;
   color: #E8ECEF;
+} */
+
+.home {
+  min-height: 100vh;
+  min-width: 100vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: "Century Gothic", sans-serif;
+  background-color: var(--green);
+  background-image: url('Homepage-BrickSans.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  color: #E8ECEF;
+  position: relative;
 }
+
+/* .home::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(60, 152, 88, 0.7);
+  pointer-events: none;
+} */
 
 .homeTitle {
   position: absolute;
@@ -20,21 +62,58 @@
 }
 
 .playButton {
-  margin-top: 100px;
-  padding: 16px 36px;
-  font-size: 50px;
-  border-radius: 8px;
-  border: none;
+  position: absolute;
+  bottom: 9vh;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.5vh 7vw;
+  font-family: 'BrickSans', sans-serif;
+  letter-spacing: 0.5vw;
+  font-size: 3vw;
+  font-weight: 900;
+  color: var(--white);
+  -webkit-text-stroke: 0.05vw var(--red);
+  border-radius: 0.5vw;
+  border: 0.3vw solid var(--red);
+  border-radius: 2vw;
   cursor: pointer;
-  background-color: #565757;
+  background-color: var(--yellow);
+  transition: transform 0.2s ease;
 }
 
-.howToPlayButton {
-  margin-top: 20px;
-  padding: 16px 36px;
-  font-size: 40px;
-  border-radius: 8px;
-  border: none;
+.playButton:hover {
+  transform: translateX(-50%) scale(1.1);
+  transition: transform 0.2s ease;
+}
+
+.tutorialButton {
+  position: absolute;
+  top: 2vh;
+  right: 7vw;
+  padding: 0.7vh 0.7vw;
+  font-size: 2.5vw;
+  border-radius: 0.5vw;
+  border: 0.2vw solid var(--red);
   cursor: pointer;
-  background-color: #565757;
+  background-color: var(--yellow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settingsButton {
+  position: absolute;
+  top: 2vh;
+  right: 2vw;
+  padding: 0.7vh 0.7vw;
+  font-size: 2.5vw;
+  font-weight: bold;
+  border-radius: 0.5vw;
+  border: 0.2vw solid var(--red);
+  cursor: pointer;
+  background-color: var(--yellow);
+  color: var(--red-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
