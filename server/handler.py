@@ -64,7 +64,7 @@ def main():
             ratio = (data['position'] - rod_limits[rod_id][0]) / (rod_limits[rod_id][1] - rod_limits[rod_id][0])
             float_position = ratio * 63.0
 
-            floatPosition = 63 - floatPosition;
+            float_position = 63 - float_position;
 
             command_byte = command_byte | int(float_position)
 
