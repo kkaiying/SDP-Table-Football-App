@@ -9,7 +9,8 @@
   --red: #b2000a;
   --yellow: #ffc704;
   --white: #ffffff;
-  --green: #004d00
+  --green: #004d00;
+  --gray: #bfbbbb;
 }
 
 .home {
@@ -19,7 +20,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  font-family: "Century Gothic", sans-serif;
+  font-family: 'BrickSans', 'sanserif';
   background-color: var(--green);
   background-image: url('Homepage-BrickSans.png');
   background-size: contain;
@@ -43,8 +44,7 @@
   bottom: 9vh;
   left: 50%;
   transform: translateX(-50%);
-  padding: 0.5vh 7vw;
-  font-family: 'BrickSans', sans-serif;
+  padding: 0.5vh 7vw; 
   letter-spacing: 0.5vw;
   font-size: 3vw;
   font-weight: 900;
@@ -66,31 +66,36 @@
 .tutorialButton {
   position: absolute;
   top: 2vh;
-  right: 7vw;
+  right: 5vw;
   padding: 0.7vh 0.7vw;
   font-size: 2.5vw;
-  border-radius: 0.5vw;
-  border: 0.2vw solid var(--red);
   cursor: pointer;
-  background-color: var(--yellow);
+  background-color: transparent;
+  color: var(--white);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+.tutorialButton:hover {
+  color: var(--gray);
+}
+
 .settingsButton {
   position: absolute;
   top: 2vh;
-  right: 2vw;
+  right: 1vw;
   padding: 0.7vh 0.7vw;
   font-size: 2.5vw;
   font-weight: bold;
-  border-radius: 0.5vw;
-  border: 0.2vw solid var(--red);
   cursor: pointer;
-  background-color: var(--yellow);
-  color: var(--red-color);
+  background-color: var(--green);
+  color: var(--white);
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.settingsButton:hover {
+  color: var(--gray);
 }

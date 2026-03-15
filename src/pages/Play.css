@@ -6,48 +6,94 @@
   justify-content: center;
   align-items: center;
   font-family: "Century Gothic", sans-serif;
-  background-color: #3C9858;
+  background-color: var(--green);
   color: #E8ECEF;
+  font-family: 'BrickSans', 'sansserif';
 }
 
 .opponent {
-  top: -33px;
-  left: 20px;
   position: absolute;
-   font-size: 40px;
+  top: 2vh;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 2vw; 
+  z-index: 1000;
+  font-size: 2vw;
+  background-color: var(--red);
+  padding: 1vh 7vw 1vh 2vw;
+  clip-path: polygon(0 0, 80% 0, 100% 100%, 0 100%);
 }
 
-.you {
-  top: -33px;
-  right: 20px;
-  position: absolute;
-   font-size: 40px;
+.opponent p {
+  margin: 0;
 }
 
 .opponentScore {
-  top: 0px;          
-  left: 265px;            
+  cursor: pointer;
+}
+
+.you {
   position: absolute;
-  font-size: 50px;
+  top: 2vh;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 2vw;
+  z-index: 1000;
+  font-size: 2vw;
+  background-color: var(--yellow);
+  padding: 1vh 2vw 1vh 5vw;
+  clip-path: polygon(20% 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.you p {
+  margin: 0;
 }
 
 .yourScore {
-  top: 0px;
-  right: 130px;
-  position: absolute;
-  font-size: 50px;
+  cursor: pointer;
 }
 
 .finishGameButton {
-  bottom: 20px;
-  right: 20px;
-  position: absolute;
-  padding: 16px 36px;
-  font-size: 35px;
-  border-radius: 8px;
-  border: none;
+  bottom: 2vh;
+  right: 5vw;
+  position: fixed;
+  padding: 0.7vh 0.7vw;
+  font-size: 2.5vw;
+  font-weight: bold;
+  border-radius: 0.5vw;
   cursor: pointer;
-  background-color: #565757;
+  background-color: var(--green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.finishGameButton:hover {
+  color: var(--gray);
+}
+
+.playSettingsButton {
+  position: fixed;
+  bottom: 2vh;
+  right: 1vw;
+  padding: 0.7vh 0.7vw;
+  font-size: 2.5vw;
+  font-weight: bold;
+  border-radius: 0.5vw;
+  cursor: pointer;
+  background-color: var(--green);
+  color: var(--red-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.playSettingsButton:hover {
+  color: var(--gray);
 }
 
 .resultMessage {
@@ -55,19 +101,19 @@
   top: 50%;         
   left: 50%;         
   transform: translate(-50%, -50%);
-  padding: 16px 36px;
-  font-size: 80px;
-  border-radius: 8px;
-  background-color: #E11D49;
+  padding: 2vh 4vw;
+  font-size: 6vw;
+  border-radius: 1vw;
+  background-color: var(--red);
 }
 
 .imageContainer {
   top: 75px;
   bottom: 0px;
-  left: 0px; /* might want to change these? */
+  left: 0px;
   right: 0px;
   position: absolute;
-  background-color: #202924; /* placeholder so you can see the area */
+  background-color: var(--green);
   display: flex;
   justify-content: center;
   align-items: center;

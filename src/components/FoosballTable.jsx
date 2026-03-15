@@ -76,13 +76,13 @@ function FoosballTable() {
       const semiCircleWidth = rodSpacing / 3
 
       // colours
-      const tableColour = 0x2d8659
+      const tableColour = 0x007900
       const tableBorder = 0x000000
       const tableMarkings = 0xffffff
       const ballColour = 0xf0eceb
       const handleColour = 0x000000
-      const playerColour = 0xffff00
-      const opponentColour = 0xff0000
+      const playerColour = 0xf7df0d
+      const opponentColour = 0xcb0c16
 
       // each rods football players
         const football_players = {
@@ -168,11 +168,12 @@ function FoosballTable() {
       // ball
       this.add.circle(tableCenterX, tableCenterY, ballRadius, ballColour)
 
-      for (let i=1; i<=numOfRods; i++) {
-        const rodX = tableLeftEdge + rodSpacing*i
+      // make the rods
+      for (let i = 1; i <= numOfRods; i++) {
+        const rodX = tableLeftEdge + rodSpacing * i
         const rodTopY = betweenCanvasAndTableTop
         const rodBottomY = betweenCanvasAndTableBottom
-        const rod = this.add.line(0,0, rodX, rodTopY, rodX, rodBottomY, 0xaaaaaa)
+        const rod = this.add.line(0,0, rodX, rodTopY, rodX, rodBottomY, 0xffffff)
                       .setLineWidth(3).setOrigin(0,0)
         
         // make the handles
@@ -398,7 +399,6 @@ function FoosballTable() {
 
           this.rightChargeLocked = true
         }
-
       }
 
       // short pass LB RB
@@ -428,7 +428,7 @@ function FoosballTable() {
       game.destroy(true)
       if (ws) ws.close()
     }
-  }, [])
+  }, [keybinds])
 
   return <div id="foosball-table"></div>
 }
