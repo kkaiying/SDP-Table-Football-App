@@ -1,0 +1,135 @@
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    font-family: 'BrickSans', 'sansserif';
+}
+
+.modal-wrapper {
+    display: flex;
+    align-items: flex-start;
+    position: relative;
+}
+
+.settings-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 0;
+    margin-right: 0;
+    z-index: 1001;
+    font-size: 2.5vw;
+}
+
+.tab {
+    background-color: var(--green);
+    padding: 1.3vh 0.5vw;
+    border-radius: 0.5vw 0 0 0.5vw;
+    cursor: pointer;
+    font-weight: bold;
+    color: var(--white);
+    transition: all 0.2s ease;
+    width: 4.5vw;
+    text-align: center;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tab:hover {
+    background-color: var(--gray);
+}
+
+.tab.active {
+    background-color: var(--yellow);
+    color: var(--white);
+    box-sizing: border-box;
+}
+
+.modal-content {
+    background-color: var(--green);
+    padding: 3vh 3vw;
+    border-radius: 0;
+    width: 70vw;
+    max-width: 700px;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    border: 0.3vw solid var(--yellow);
+}
+
+.modal-content h2 {
+    margin: 0 0 2vh 0;
+    color: var(--white);
+    text-align: center;
+    font-size: 2.5vw;
+}
+
+.modal-close {
+    position: absolute;
+    top: 0.2vh;
+    right: 0.2vw;
+    background: none;
+    border: none;
+    font-size: 3vw;
+    cursor: pointer;
+    color: var(--yellow);
+}
+
+.modal-close:hover {
+    color: #000;
+}
+
+.settings-content {
+    margin-top: 2vh;
+}
+
+.control-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1vh 0;
+    border-bottom: 1px solid #ddd;
+  }
+
+.control-label {
+    font-size: 1.5vw;
+    font-weight: bold;
+    color: var(--white);
+}
+
+.keybind-box {
+    padding: 0.5vh 1.5vw;
+    border: 0.2vw solid var(--red-color);
+    border-radius: 0.3vw;
+    background-color: var(--yellow);
+    font-weight: bold;
+    font-size: 1.5vw;
+    color: black;
+    min-width: 6vw;
+    text-align: center;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+.keybind-box:hover {
+    background-color: #f0f0f0;
+}
+
+.keybind-box.listening {
+    background-color: var(--red-color);
+    color: white;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}

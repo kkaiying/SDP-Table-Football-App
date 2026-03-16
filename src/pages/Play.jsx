@@ -2,11 +2,15 @@ import "./Play.css";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import FoosballTable from "../components/FoosballTable";
+import { IoExitOutline } from "react-icons/io5";
+import { IoSettingsSharp } from 'react-icons/io5'
+import Settings from "../components/Settings";
 
 export default function Play() {
   const [opponentScore, setOpponentScore] = useState(0);
   const [yourScore, setYourScore] = useState(0);
   const [result, setResult] = useState("");
+  const [showSettings, setShowSettings] = useState(false);
   const navigate = useNavigate();
 
   const incrementOpponentScore = () => {
@@ -33,19 +37,27 @@ export default function Play() {
 
   return (
     <div className="play">
-      <p className="opponent">Opponent</p>
-      <div className="opponentScore" onClick={incrementOpponentScore}>
-        {opponentScore}
+      <div className="opponent">
+        <p>Opponent</p>
+        <div className="opponentScore" onClick={incrementOpponentScore}>
+          {opponentScore}
+        </div>
       </div>
       <div className="imageContainer">
         <FoosballTable/>
       </div>
-      <p className="you">You</p>
-      <div className="yourScore" onClick={incrementYourScore}>
-        {yourScore}
+      <div className="you">
+        <div className="yourScore" onClick={incrementYourScore}>
+          {yourScore}
+        </div>
+        <p>You</p>
       </div>
-      <button className="finishGameButton" onClick={finishGame}>Finish Game</button>
+      <button className="finishGameButton" onClick={finishGame}><IoExitOutline /></button>
+      <button className="playSettingsButton" onClick={() => setShowSettings(true)}>
+        <IoSettingsSharp />
+      </button>
       {result && <div className="resultMessage">{result}</div>}
+      {showSettings && <Settings onClose={() => setShowSettings(false)} />}
     </div>
   );
 }

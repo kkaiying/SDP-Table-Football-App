@@ -20,8 +20,8 @@ export function rodSliding(scene, rodHitbox, rodElements, constraints) {
     const topDistance = rodHitbox.y - topPlayerY
     const bottomDistance = bottomPlayerY - rodHitbox.y
 
-    // extra padding for goalkeeper to prevent handle from leaving table
-    const padding = isGoalkeeper ? 205 : (playerHeight / 2)  
+    // extra padding for goalkeeper
+    const padding = isGoalkeeper ? (tableBottomEdge - tableTopEdge) * 0.412 : (playerHeight / 2)  
 
     const minY = tableTopEdge + topDistance + padding
     const maxY = tableBottomEdge - bottomDistance - padding
@@ -84,7 +84,7 @@ export function setRodHighlight(rodData, active) {
 export function kickRod(scene, players, level = 1, direction = 'right', rodId) {
   const powerByLevel = {
     1: { widthMultiplier: 1.2, kickDistance: 6, duration: 110 },  // short pass
-    2: { widthMultiplier: 1.7, kickDistance: 20, duration: 70 }   // strong kick
+    2: { widthMultiplier: 1.9, kickDistance: 20, duration: 70 }   // strong kick
   }
 
   const power = powerByLevel[level] || powerByLevel[1]
@@ -121,7 +121,6 @@ export function kickRod(scene, players, level = 1, direction = 'right', rodId) {
 export function moveRod(rodData, delta) {
   const { hitbox, elements, offsets, tableTopEdge, tableBottomEdge } = rodData
 
-  // get player rectangles only
   const players = elements.filter(el => el.displayHeight && el.displayHeight < 50)
 
   const isGoalkeeper = players.length === 1
@@ -132,7 +131,7 @@ export function moveRod(rodData, delta) {
   const topDistance = hitbox.y - topPlayerY
   const bottomDistance = bottomPlayerY - hitbox.y
 
-  const padding = isGoalkeeper ? 205 : (players[0].displayHeight / 2)
+  const padding = isGoalkeeper ? (tableBottomEdge - tableTopEdge) * 0.412 : (players[0].displayHeight / 2)
 
   const minY = tableTopEdge + topDistance + padding
   const maxY = tableBottomEdge - bottomDistance - padding
