@@ -101,7 +101,7 @@ export function kickRod(scene, players, level = 1, direction = 'right', rodId) {
       player.chargeTween = null
     }
 
-    sendKickCommand(rodId, level, direction)
+    //sendKickCommand(rodId, level, direction)
 
     player.kickTween = scene.tweens.add({
       targets: player, // rectangle animated
@@ -119,6 +119,8 @@ export function kickRod(scene, players, level = 1, direction = 'right', rodId) {
       }
     })
   })
+  
+  sendKickCommand(rodId, level, direction)
 }
 
 export function moveRod(rodData, delta) {
