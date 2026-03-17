@@ -5,6 +5,7 @@ let ws = null
     //ws = new WebSocket('ws://localhost:8080') 
     //ws = new WebSocket('ws://100.84.232.141:8080')
     ws = new WebSocket(`ws://${host}:8080`);
+    //ws = new WebSocket('ws://192.168.18.115:8080');
 
     ws.onopen = () => {
       console.log('Connected to server')

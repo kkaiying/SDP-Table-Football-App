@@ -27,13 +27,16 @@ export function rodSliding(scene, rodHitbox, rodElements, constraints) {
     const maxY = tableBottomEdge - bottomDistance - padding
 
     rodHitbox.on('drag', (pointer, dragX, dragY) => {
-        rodHitbox.y = Phaser.Math.Clamp(dragY, minY, maxY)
+        //rodHitbox.y = Phaser.Math.Clamp(dragY, minY, maxY)
+
+	const rodFloatPosition = (rodHitbox.y - minY) / (maxY - minY)
 
         rodElements.forEach((element, index) => {
             element.y = rodHitbox.y + offsets[index]
         })
 
-        sendSlideCommand(rodId, rodHitbox.y, 0)
+        //sendSlideCommand(rodId, rodHitbox.y, 0)
+	sendSlideCommand(rodId, rodFloatPosition, 0)
     })
 
 }
@@ -142,8 +145,14 @@ export function moveRod(rodData, delta) {
     element.y = hitbox.y + offsets[index]
   })
 
+  //console.log(`maxY ${maxY}`)
+  //console.log(`minY ${minY}`)
+  const rodFloatPosition = 1.0 - (hitbox.y - minY) / (maxY - minY)
+  //console.log(rodFloatPosition)
+
   if (rodData.rodId !== undefined) {
-    sendSlideCommand(rodData.rodId, hitbox.y)
+    //sendSlideCommand(rodData.rodId, hitbox.y)
+    sendSlideCommand(rodData.rodId, rodFloatPosition)
   }
 }
 
