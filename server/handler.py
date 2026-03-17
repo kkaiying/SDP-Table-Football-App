@@ -61,10 +61,12 @@ def main():
         if data['type'] == 'slide':
             command_byte = 0b10000000
         
-            ratio = (data['position'] - rod_limits[rod_id][0]) / (rod_limits[rod_id][1] - rod_limits[rod_id][0])
+            #ratio = (data['position'] - rod_limits[rod_id][0]) / (rod_limits[rod_id][1] - rod_limits[rod_id][0])
+            ratio = data['position']
             float_position = ratio * 63.0
 
-            float_position = 63 - float_position;
+            print("ratio: " + str(ratio))
+            print("float_position: " + str(float_position))
 
             command_byte = command_byte | int(float_position)
 
