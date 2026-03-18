@@ -9,6 +9,15 @@ function FoosballTable() {
   const { keybinds } = useKeybinds()
   useEffect(() => {
     const ws = connectToServer()
+    let ballUpdateHandler = null
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (ballUpdateHandler) ballUpdateHandler(data)
+      } catch (err) {
+        console.error('Ball position error:', err)
+      }
+    }
     const config = {
       type: Phaser.AUTO,
       width: '100%',
@@ -166,7 +175,7 @@ function FoosballTable() {
         .setStrokeStyle(4, tableBorder).setFillStyle(tableColour, 0)
 
       // ball
-      this.add.circle(tableCenterX, tableCenterY, ballRadius, ballColour)
+      this.ball = this.add.circle(tableCenterX, tableCenterY, ballRadius, ballColour)
 
       // make the rods
       for (let i = 1; i <= numOfRods; i++) {
@@ -297,6 +306,27 @@ function FoosballTable() {
           })
         }
       })
+
+      ballUpdateHandler = (data) => {
+        if (data.type === 'ball_position') {
+          const tableX = tableLeftEdge + (data.x / 640) * tableWidth
+          const tableY = tableTopEdge + (data.y / 480) * tableHeight
+
+          // Clamp to keep ball within table bounds (accounting for ball radius)
+          // const clampedX = Phaser.Math.Clamp(tableX, tableLeftEdge + ballRadius, tableRightEdge - ballRadius)
+          // const clampedY = Phaser.Math.Clamp(tableY, tableTopEdge + ballRadius, tableBottomEdge - ballRadius)
+          // if (this.ball) {
+          //   this.ball.x = clampedX
+          //   this.ball.y = clampedY
+          // }
+          // //
+
+          if (this.ball) {
+            this.ball.x = tableX
+            this.ball.y = tableY
+          }
+        }
+      }
     }
     
     function update() {
