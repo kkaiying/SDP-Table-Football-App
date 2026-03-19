@@ -82,4 +82,10 @@ const redis = require('redis')
     }
   }
 
-  console.log('WebSocket server running on ws://localhost:8080')
+  client.on("message", (channel, message) => {
+    const data = JSON.parse(message);
+    console.log(`Received from ${channel}:`, data);
+  });
+
+  console.log('WebSocket server running on ws://localhost:8080');
+  client.subscribe("playerUpdate");
