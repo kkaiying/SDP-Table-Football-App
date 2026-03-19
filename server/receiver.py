@@ -1,5 +1,6 @@
 import serial
 import json
+import redis
 
 playerPositions = {
         "1": 0,
