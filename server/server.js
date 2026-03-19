@@ -3,6 +3,7 @@ const redis = require('redis')
 
   const wss = new WebSocket.Server({ port: 8080 })
   const client = redis.createClient();
+  const receive = redis.createClient();
 
   // Rod IDs to swap
   const valid_rod_ids = [1, 2, 4, 6]
@@ -82,10 +83,10 @@ const redis = require('redis')
     }
   }
 
-  client.on("message", (channel, message) => {
+  receive.on("message", (channel, message) => {
     const data = JSON.parse(message);
     console.log(`Received from ${channel}:`, data);
   });
 
   console.log('WebSocket server running on ws://localhost:8080');
-  client.subscribe("playerUpdate");
+  receive.subscribe("playerUpdate");
