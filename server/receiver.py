@@ -36,7 +36,7 @@ while True:
             playerNumber = (inByte & 0b11000000) >> 6
             playerPosition = inByte & 0b00111111
 
-            if (playerPosition[str(playerNumber + 1)] != playerPosition:
+            if playerPosition[str(playerNumber + 1)] != playerPosition:
                 print("Player number:", playerNumber, "position", playerPosition)
                 playerPositions[str(playerNumber + 1)] = playerPosition
                 positionChanged = 1
