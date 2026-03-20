@@ -43,7 +43,7 @@ while True:
     
     if arduinoRightData:
         for inByte in arduinoRightData:
-            playerNumber = ((inByte & 0b11000000) >> 6) + 2
+            playerNumber = (inByte & 0b11000000) >> 6
             playerPosition = inByte & 0b00111111
             
             if playerPositions[str(playerNumber + 1)] != playerPosition:
