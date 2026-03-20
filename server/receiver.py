@@ -19,13 +19,17 @@ arduinoRightData = ''
 
 positionChanged = 0
 
+print("Waiting for inputs from the Arduinos")
+
 while True:
     if arduinoLeft.in_waiting > 0:
         arduinoLeftData = arduinoLeft.read(arduinoLeft.in_waiting)
-        psotionChanged = 1
+        postionChanged = 1
+        print("Position on left changed")
     if arduinoRight.in_waiting > 0:
         arduinoRightData = arduinoRight.read(arduinoRight.in_waiting)
         positionChanged = 1
+        print("Position on right changed")
 
     if arduinoLeftData:
         for inByte in arduinoLeftData:
@@ -42,4 +46,7 @@ while True:
             playerPositions[str(playerNumber)] = playerPosition
 
     if positionChanged > 1:
+        print("New position")
+        print(playerPositions)
         redisHost.publish('playerUpdate', json.dumps(playerPositions))
+        positionChanged = 0
