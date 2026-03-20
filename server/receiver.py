@@ -45,7 +45,7 @@ while True:
 
             playerPositions[str(playerNumber)] = playerPosition
 
-    if positionChanged > 1:
+    if positionChanged > 0:
         print("New position")
         print(playerPositions)
         redisHost.publish('playerUpdate', json.dumps(playerPositions))
