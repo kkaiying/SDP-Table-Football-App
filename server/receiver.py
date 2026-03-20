@@ -36,14 +36,14 @@ while True:
             playerNumber = (inByte & 0b11000000) >> 6
             playerPosition = inByte & 0b00111111
 
-            playerPositions[str(playerNumber)] = playerPosition
+            playerPositions[str(playerNumber + 1)] = playerPosition
     
     if arduinoRightData:
         for inByte in arduinoRightData:
             playerNumber = (inByte & 0b11000000) >> 6
             playerPosition = inByte & 0b00111111
 
-            playerPositions[str(playerNumber)] = playerPosition
+            playerPositions[str(playerNumber + 1)] = playerPosition
 
     if positionChanged > 0:
         print("New position")
