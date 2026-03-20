@@ -24,11 +24,11 @@ print("Waiting for inputs from the Arduinos")
 while True:
     if arduinoLeft.in_waiting > 0:
         arduinoLeftData = arduinoLeft.read(arduinoLeft.in_waiting)
-        postionChanged = 1
+        #postionChanged = 1
         #print("Position on left changed")
     if arduinoRight.in_waiting > 0:
         arduinoRightData = arduinoRight.read(arduinoRight.in_waiting)
-        positionChanged = 1
+        #positionChanged = 1
         #print("Position on right changed")
 
     if arduinoLeftData:
@@ -36,16 +36,20 @@ while True:
             playerNumber = (inByte & 0b11000000) >> 6
             playerPosition = inByte & 0b00111111
 
-            print("Player number:", playerNumber, "position", playerPosition)
-
-            playerPositions[str(playerNumber + 1)] = playerPosition
+            if (playerPosition[str(playerNumber + 1)] != playerPosition:
+                print("Player number:", playerNumber, "position", playerPosition)
+                playerPositions[str(playerNumber + 1)] = playerPosition
+                positionChanged = 1
     
     if arduinoRightData:
         for inByte in arduinoRightData:
-            playerNumber = (inByte & 0b11000000) >> 6
+            playerNumber = ((inByte & 0b11000000) >> 6) + 2
             playerPosition = inByte & 0b00111111
-
-            playerPositions[str(playerNumber + 1)] = playerPosition
+            
+            if playerPosition[str(playerNumber + 1)] != playerPosition:
+                print("Player number:", playerNumber, "position", playerPosition)
+                playerPositions[str(playerNumber + 1)] = playerPosition
+                positionChanged = 1
 
     if positionChanged > 0:
         #print("New position")
