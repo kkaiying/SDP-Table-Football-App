@@ -1,0 +1,24 @@
+.aiOpponent {
+  min-height: 100vh;
+  min-width: 100vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: 'BrickSans', 'sanserif';
+  background-color: var(--green);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  color: #E8ECEF;
+  position: relative;
+}
+
+.aiTitle {
+  position: absolute;
+  top: 0px;
+  left: 50%; 
+  transform: translateX(-50%);
+  font-size: 80px;
+  white-space: nowrap;
+}
