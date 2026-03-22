@@ -1,0 +1,8 @@
+Input Response Time: 0.10ms
+19FoosballTable.jsx:272 Input Response Time: 0.00ms
+FoosballTable.jsx:272 Input Response Time: 0.10ms
+FoosballTable.jsx:272 Input Response Time: 0.00ms
+2FoosballTable.jsx:272 Input Response Time: 0.10ms
+FoosballTable.jsx:272 Input Response Time: 0.00ms
+FoosballTable.jsx:272 Input Response Time: 0.10ms
+4FoosballTable.jsx:272 Input Response Time: 0.00ms
