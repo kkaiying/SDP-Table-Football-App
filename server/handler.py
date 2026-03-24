@@ -47,7 +47,7 @@ def main():
     print("Waiting for incoming commands")
 
     while True:
-        name, ticket = r.blpop('task_queue', timeout=0)
+        name, ticket = r.brpop('task_queue', timeout=0)
         data = json.loads(ticket)
 
         rod_switch = 0b01000000
