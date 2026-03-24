@@ -90,8 +90,8 @@ function FoosballTable() {
       const tableMarkings = 0xffffff
       const ballColour = 0xf0eceb
       const handleColour = 0x000000
-      const playerColour = 0xf7df0d
-      const opponentColour = 0xcb0c16
+      const playerColour = 0xebf527
+      const opponentColour = 0x1da3f2
 
       // each rods football players
         const football_players = {
@@ -254,7 +254,7 @@ function FoosballTable() {
       this.add.rectangle(tableRightEdge, tableCenterY, 20, tableHeight * 0.165, 0xffffff).setStrokeStyle(2,0x000000)
 
       // rod selection
-      const selectRod = (rodNumber) => {
+      const selectRod = (rodNumber, startTime) => {
         const targetRod = this.rodMap[rodNumber]
         if (this.selectedRod === targetRod) {
           setRodHighlight(this.selectedRod, false)
@@ -264,13 +264,21 @@ function FoosballTable() {
           this.selectedRod = targetRod
           setRodHighlight(this.selectedRod, true)
         }
+
+        // Measure input response time
+        if (startTime) {
+          const endTime = performance.now()
+          const responseTime = endTime - startTime
+          console.log(`[KEYDOWN_RESPONSE] ${responseTime.toFixed(2)}ms`)
+        }
       }
 
       this.input.keyboard.on('keydown', (event) => {
-        if (event.key === this.keybinds.rod1) selectRod(1)
-        else if (event.key === this.keybinds.rod2) selectRod(2)
-        else if (event.key === this.keybinds.rod3) selectRod(3)
-        else if (event.key === this.keybinds.rod4) selectRod(4)
+        const startTime = performance.now()
+        if (event.key === this.keybinds.rod1) selectRod(1, startTime)
+        else if (event.key === this.keybinds.rod2) selectRod(2, startTime)
+        else if (event.key === this.keybinds.rod3) selectRod(3, startTime)
+        else if (event.key === this.keybinds.rod4) selectRod(4, startTime)
       })
 
       this.input.on('pointermove', (pointer) => {
@@ -292,7 +300,7 @@ function FoosballTable() {
 
           if (this.selectedRodScrollTimer) this.selectedRodScrollTimer.remove(false)
 
-          this.selectedRodScrollTimer = this.time.delayedCall(120, () => {
+          this.selectedRodScrollTimer = this.time.delayedCall(50, () => {
             let level
         
             if (this.selectedRodScrollCount <= 2) level = 1  
@@ -307,23 +315,59 @@ function FoosballTable() {
         }
       })
 
+      // Track ball update timing
+      this.lastBallUpdateTime = null
+
       ballUpdateHandler = (data) => {
         if (data.type === 'ball_position') {
+          const currentTime = performance.now()
+
+          // Log time between updates
+          if (this.lastBallUpdateTime !== null) {
+            const timeSinceLastUpdate = currentTime - this.lastBallUpdateTime
+            console.log(`[BALL_UPDATE_RATE] ${timeSinceLastUpdate.toFixed(2)}ms`)
+          }
+          this.lastBallUpdateTime = currentTime
+
+          // DO NOT REMOVE! uncomment for PACKET_COUNT test
+          // if (data.sequenceNum !== undefined) {
+          //   console.log(`[PACKET_COUNT] ${data.sequenceNum}`)
+          // }
+
           const tableX = tableLeftEdge + (data.x / 640) * tableWidth
           const tableY = tableTopEdge + (data.y / 480) * tableHeight
 
-          // Clamp to keep ball within table bounds (accounting for ball radius)
-          // const clampedX = Phaser.Math.Clamp(tableX, tableLeftEdge + ballRadius, tableRightEdge - ballRadius)
-          // const clampedY = Phaser.Math.Clamp(tableY, tableTopEdge + ballRadius, tableBottomEdge - ballRadius)
-          // if (this.ball) {
-          //   this.ball.x = clampedX
-          //   this.ball.y = clampedY
-          // }
-          // //
+          // DO NOT REMOVE! uncomment for BALL_POSITION_CONSISTENCY test
+          // console.log(`[BALL_POSITION_CONSISTENCY] x=${data.x.toFixed(2)}, y=${data.y.toFixed(2)}`)
+
+          // Clamp to keep ball within table bounds 
+          const clampedX = Phaser.Math.Clamp(tableX, tableLeftEdge + ballRadius, tableRightEdge - ballRadius)
+          const clampedY = Phaser.Math.Clamp(tableY, tableTopEdge + ballRadius, tableBottomEdge - ballRadius)
+          if (this.ball) {
+            this.ball.x = clampedX
+            this.ball.y = clampedY
+          }
+          //
 
           if (this.ball) {
             this.ball.x = tableX
             this.ball.y = tableY
+          }
+
+          // Record latency if timestamp and testId present (for testing)
+          if (data.timestamp !== undefined && data.testId !== undefined) {
+            const receiveTime = Date.now()
+            const latency = receiveTime - data.timestamp
+            console.log(`[BALL_MOVEMENT_LATENCY] ${latency.toFixed(2)}ms`)
+
+            // Send latency back via WebSocket
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({
+                type: 'latency_result',
+                testId: data.testId,
+                latency: latency
+              }))
+            }
           }
         }
       }
