@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Fake CV Test</title>
+</head>
+
+<body>
+    <h1>Fake CV Ball Simulator</h1>
+    <button onclick="startSending()">Start Sending Ball Positions</button>
+    <button onclick="stopSending()">Stop</button>
+    <p id="status">Not connected</p>
+
+    <script>
+        let ws
+        let interval
+
+        function connect() {
+            ws = new WebSocket('ws://localhost:8080')
+            ws.onopen = () => {
+                document.getElementById('status').textContent = 'Connected!'
+            }
+        }
+
+        function startSending() {
+            connect()
+            let x = 320, y = 240 // start center
+            let dx = 2, dy = 1.5  // movement speed
+
+            interval = setInterval(() => {
+                // Bounce ball around
+                x += dx
+                y += dy
+                if (x < 0 || x > 640) dx = -dx
+                if (y < 0 || y > 480) dy = -dy
+
+                ws.send(JSON.stringify({
+                    type: 'ball_position',
+                    x: x,
+                    y: y
+                }))
+            }, 30)
+        }
+
+        function stopSending() {
+            clearInterval(interval)
+            ws.close()
+            document.getElementById('status').textContent = 'Stopped'
+        }
+    </script>
+</body>
+
+</html>

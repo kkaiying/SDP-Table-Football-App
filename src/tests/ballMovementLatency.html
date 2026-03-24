@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+  <html>
+  <head><title>Latency Test</title></head>
+  <body>
+    <h1>Ball Latency Test</h1>
+    <button onclick="startLatencyTest()">Start Latency Test (100 samples)</button>
+    <button onclick="stopTest()">Stop</button>
+    <p id="status">Not connected</p>
+    <div id="results"></div>
+
+    <script>
+      let ws
+      let testResults = []
+      let testCount = 0
+      let maxTests = 100
+      let testActive = false
+
+      function connect() {
+        ws = new WebSocket('ws://localhost:8080')
+        ws.onopen = () => {
+          document.getElementById('status').textContent = 'Connected! Ready to test.'
+        }
+        ws.onerror = () => {
+          document.getElementById('status').textContent = 'Connection error'
+        }
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data)
+            if (data.type === 'latency_result') {
+              testResults.push(data.latency)
+              console.log(`Received latency for test ${data.testId}: ${data.latency.toFixed(2)}ms`)
+            }
+          } catch (err) {
+            console.error('Error parsing message:', err)
+          }
+        }
+      }
+
+      function startLatencyTest() {
+        if (testActive) return
+
+        testActive = true
+        testResults = []
+        testCount = 0
+        document.getElementById('results').innerHTML = '<p>Running tests...</p>'
+
+        connect()
+        setTimeout(runSingleTest, 1000) // Wait 1s for connection
+      }
+
+      function runSingleTest() {
+        if (!testActive) return
+
+        const sendTime = Date.now()
+        const testBallX = 300 + Math.random() * 40 
+        const testBallY = 240 + Math.random() * 40
+
+        ws.send(JSON.stringify({
+          type: 'ball_position',
+          x: testBallX,
+          y: testBallY,
+          timestamp: sendTime,
+          testId: testCount
+        }))
+
+        testCount++
+        document.getElementById('status').textContent = `Test 
+  ${testCount}/${maxTests}...`
+
+        // Wait 500ms before next test
+        if (testCount < maxTests) {
+          setTimeout(runSingleTest, 500)
+        } else {
+          setTimeout(finishTest, 1000) 
+        }
+      }
+
+      function finishTest() {
+        testActive = false
+        document.getElementById('status').textContent = 'Test complete!'
+        calculateStats()
+      }
+
+      function stopTest() {
+        testActive = false
+        ws.close()
+        document.getElementById('status').textContent = 'Stopped'
+      }
+
+      function calculateStats() {
+        if (testResults.length === 0) {
+          document.getElementById('results').innerHTML = '<p>No results collected. Make sure React app is recording latencies!</p>'
+          return
+        }
+
+        const avg = testResults.reduce((a, b) => a + b, 0) / testResults.length
+        const min = Math.min(...testResults)
+        const max = Math.max(...testResults)
+
+        // Standard deviation
+        const variance = testResults.reduce((sum, val) => sum + Math.pow(val - avg,
+  2), 0) / testResults.length
+        const stdDev = Math.sqrt(variance)
+
+        document.getElementById('results').innerHTML = `
+          <h2>Results (${testResults.length} samples)</h2>
+          <p><strong>Average Latency:</strong> ${avg.toFixed(2)} ms</p>
+          <p><strong>Min Latency:</strong> ${min.toFixed(2)} ms</p>
+          <p><strong>Max Latency:</strong> ${max.toFixed(2)} ms</p>
+          <p><strong>Std Deviation:</strong> ${stdDev.toFixed(2)} ms</p>
+          <p><strong>Interpretation:</strong> ${interpretResults(avg)}</p>
+          <details>
+            <summary>View all samples</summary>
+            <pre>${JSON.stringify(testResults, null, 2)}</pre>
+          </details>
+        `
+      }
+
+      function interpretResults(avg) {
+        if (avg < 50) return '✅ Excellent - imperceptible lag'
+        if (avg < 100) return '✅ Good - acceptable for real-time gaming'
+        if (avg < 200) return '⚠️ Acceptable - slight noticeable delay'
+        return '❌ Poor - significant lag affects gameplay'
+      }
+
+    </script>
+  </body>
+  </html>
