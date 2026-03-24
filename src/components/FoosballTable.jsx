@@ -81,8 +81,8 @@ function FoosballTable() {
       const tableMarkings = 0xffffff
       const ballColour = 0xf0eceb
       const handleColour = 0x000000
-      const playerColour = 0xf7df0d
-      const opponentColour = 0xcb0c16
+      const playerColour = 0xebf527
+      const opponentColour = 0x1da3f2
 
       // each rods football players
         const football_players = {
