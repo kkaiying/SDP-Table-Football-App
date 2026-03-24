@@ -75,15 +75,12 @@ def main():
             #serial_out.write(command_byte)
 
         elif data['type'] == 'kick':
-            command_byte = 0b11000000 + (data['level'] << 3);
+            command_byte = 0b11000000 + (data['fast'] << 5);
 
-            if data['direction'] == 'right':
-                command_byte = command_byte | 0b00100000
-
-            EOT_byte = 0b00000001;
+            command_byte += int(round(float(data['angle']) / 1.8)) // 10
 
             print_binary_8_double(rod_switch, command_byte)
-            serial_out.write(bytes([rod_switch, command_byte, EOT_byte, EOT_byte]))
+            serial_out.write(bytes([rod_switch, command_byte]))
             #serial_out.write(command_byte)
             serial_out.flush();
 
