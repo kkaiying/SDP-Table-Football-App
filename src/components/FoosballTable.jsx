@@ -2,22 +2,23 @@ import { useEffect } from 'react'
 import Phaser from 'phaser'
 import './FoosballTable.css'
 import { rodSliding, switchMode, setRodHighlight, kickRod, moveRod, chargeRod, releaseCharge} from './foosballControls'
-import { connectToServer } from '../utils/websocket'
+import { addMessageListener, connectToServer } from '../utils/websocket'
 import { useKeybinds } from './KeybindContext'
 
 function FoosballTable() {
   const { keybinds } = useKeybinds()
+
   useEffect(() => {
     const ws = connectToServer()
     let ballUpdateHandler = null
-    ws.onmessage = (event) => {
+    const unsubscribeMessage = addMessageListener((event) => {
       try {
         const data = JSON.parse(event.data)
         if (ballUpdateHandler) ballUpdateHandler(data)
       } catch (err) {
         console.error('Ball position error:', err)
       }
-    }
+    })
     const config = {
       type: Phaser.AUTO,
       width: '100%',
@@ -66,6 +67,14 @@ function FoosballTable() {
       const tableRightEdge = tableCenterX + tableWidth / 2
       const tableTopEdge = tableCenterY - tableHeight / 2
       const tableBottomEdge = tableCenterY + tableHeight / 2
+      // Tune these bounds if camera/table framing is slightly offset.
+      // Values are normalized within the logical 640x480 feed mapped to the table.
+      const ballFieldBounds = {
+        left: 0.03,
+        right: 0.97,
+        top: 0.04,
+        bottom: 0.96
+      }
       const canvasTop = 0
       const betweenCanvasAndTableTop = (canvasTop + tableTopEdge) / 2
       const betweenCanvasAndTableBottom = (canvasHeight + tableBottomEdge) / 2
@@ -176,6 +185,22 @@ function FoosballTable() {
 
       // ball
       this.ball = this.add.circle(tableCenterX, tableCenterY, ballRadius, ballColour)
+      this.ballStatusText = this.add.text(tableLeftEdge, tableTopEdge - 28, 'Ball: Lost', {
+        fontFamily: 'Arial',
+        fontSize: '16px',
+        color: '#ffffff',
+        stroke: '#000000',
+        strokeThickness: 4
+      }).setDepth(10)
+      this.wsDebugText = this.add.text(tableLeftEdge, tableBottomEdge + 8, 'WS: waiting...', {
+        fontFamily: 'Arial',
+        fontSize: '13px',
+        color: '#ffffff',
+        stroke: '#000000',
+        strokeThickness: 3
+      }).setDepth(10)
+      this.wsMessageCount = 0
+      this.lastWsMessageTime = performance.now()
 
       // make the rods
       for (let i = 1; i <= numOfRods; i++) {
@@ -317,9 +342,35 @@ function FoosballTable() {
 
       // Track ball update timing
       this.lastBallUpdateTime = null
+      this.lastBallSignalTime = performance.now()
+
+      this.applyBallStatus = (status) => {
+        if (this.ballStatusText) {
+          if (status === 'tracked') this.ballStatusText.setText('Ball: Tracked')
+          else if (status === 'coasting') this.ballStatusText.setText('Ball: Coasting')
+          else this.ballStatusText.setText('Ball: Lost')
+        }
+
+        if (this.ball) {
+          if (status === 'tracked') this.ball.setFillStyle(ballColour)
+          else if (status === 'coasting') this.ball.setFillStyle(0xff9f1c)
+          else this.ball.setFillStyle(0x7d8597)
+        }
+      }
 
       ballUpdateHandler = (data) => {
+        this.wsMessageCount += 1
+        this.lastWsMessageTime = performance.now()
+        if (this.wsDebugText) {
+          const statusPart = data.status ? ` status=${data.status}` : ''
+          this.wsDebugText.setText(`WS msgs=${this.wsMessageCount} last=${data.type || 'unknown'}${statusPart}`)
+        }
+
         if (data.type === 'ball_position') {
+          this.lastBallSignalTime = performance.now()
+          const inferredStatus = data.status || (data.coasting ? 'coasting' : 'tracked')
+          this.applyBallStatus(inferredStatus)
+
           const currentTime = performance.now()
 
           // Log time between updates
@@ -334,24 +385,26 @@ function FoosballTable() {
           //   console.log(`[PACKET_COUNT] ${data.sequenceNum}`)
           // }
 
-          const tableX = tableLeftEdge + (data.x / 640) * tableWidth
-          const tableY = tableTopEdge + (data.y / 480) * tableHeight
+          const normalizedX = Phaser.Math.Clamp(data.x / 640, 0, 1)
+          const normalizedY = Phaser.Math.Clamp(data.y / 480, 0, 1)
+          const mappedNormX = ballFieldBounds.left + normalizedX * (ballFieldBounds.right - ballFieldBounds.left)
+          const mappedNormY = ballFieldBounds.top + normalizedY * (ballFieldBounds.bottom - ballFieldBounds.top)
+          const tableX = tableLeftEdge + mappedNormX * tableWidth
+          const tableY = tableTopEdge + mappedNormY * tableHeight
 
           // DO NOT REMOVE! uncomment for BALL_POSITION_CONSISTENCY test
           // console.log(`[BALL_POSITION_CONSISTENCY] x=${data.x.toFixed(2)}, y=${data.y.toFixed(2)}`)
 
-          // Clamp to keep ball within table bounds 
-          const clampedX = Phaser.Math.Clamp(tableX, tableLeftEdge + ballRadius, tableRightEdge - ballRadius)
-          const clampedY = Phaser.Math.Clamp(tableY, tableTopEdge + ballRadius, tableBottomEdge - ballRadius)
+          // Clamp to keep ball within table bounds
+          const minX = tableLeftEdge + ballRadius + ballFieldBounds.left * tableWidth
+          const maxX = tableLeftEdge - ballRadius + ballFieldBounds.right * tableWidth
+          const minY = tableTopEdge + ballRadius + ballFieldBounds.top * tableHeight
+          const maxY = tableTopEdge - ballRadius + ballFieldBounds.bottom * tableHeight
+          const clampedX = Phaser.Math.Clamp(tableX, minX, maxX)
+          const clampedY = Phaser.Math.Clamp(tableY, minY, maxY)
           if (this.ball) {
             this.ball.x = clampedX
             this.ball.y = clampedY
-          }
-          //
-
-          if (this.ball) {
-            this.ball.x = tableX
-            this.ball.y = tableY
           }
 
           // Record latency if timestamp and testId present (for testing)
@@ -369,6 +422,9 @@ function FoosballTable() {
               }))
             }
           }
+        } else if (data.type === 'ball_status') {
+          this.lastBallSignalTime = performance.now()
+          this.applyBallStatus(data.status || 'lost')
         }
       }
     }
@@ -494,13 +550,21 @@ function FoosballTable() {
       this.prevRT = rtValue
       this.prevDpadLeft = dpadLeft
       this.prevDpadRight = dpadRight
+
+      if (performance.now() - this.lastBallSignalTime > 700) {
+        this.applyBallStatus('lost')
+      }
+
+      if (this.wsDebugText && performance.now() - this.lastWsMessageTime > 1500) {
+        this.wsDebugText.setText(`WS msgs=${this.wsMessageCount} idle`)
+      }
     }
 
     const game = new Phaser.Game(config)
 
     return () => {
+      unsubscribeMessage()
       game.destroy(true)
-      if (ws) ws.close()
     }
   }, [keybinds])
 
