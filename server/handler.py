@@ -75,8 +75,8 @@ def main():
             #serial_out.write(command_byte)
 
         elif data['type'] == 'kick':
-            command_byte = 0b11000000 + (data['fast'] << 5);
-
+            command_byte = 0b11000000 + (data['fast'] << 5)
+            print(int(round(float(data['angle']) / 1.8)) // 10)
             command_byte += int(round(float(data['angle']) / 1.8)) // 10
 
             print_binary_8_double(rod_switch, command_byte)
