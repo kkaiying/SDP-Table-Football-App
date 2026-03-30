@@ -136,3 +136,21 @@ export function disconnectFromServer() {
     console.log('Sent kick:', command)
     return true
   }
+  
+  export function sendChargeCommand(rod, enable) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      console.error('WebSocket not connected')
+      return false
+    }
+
+    const command = {
+      type: 'charge',
+      rod,
+      enable: enable,
+      timestamp: Date.now()
+    }
+
+    ws.send(JSON.stringify(command))
+    console.log('Sent charge:', command)
+    return true
+  }

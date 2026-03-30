@@ -82,7 +82,7 @@ function FoosballTable() {
       const rodSpacing = tableWidth / (numOfRods+1)
       const playerRods = [1,2,4,6]
       const handleWidth = 30
-      const ballRadius = tableWidth * 0.02
+      const ballRadius = tableWidth * 0.015
       const circleMarkerRadius = rodSpacing
 
       // goal markings
@@ -99,8 +99,8 @@ function FoosballTable() {
       const tableMarkings = 0xffffff
       const ballColour = 0xf0eceb
       const handleColour = 0x000000
-      const playerColour = 0xf7df0d
-      const opponentColour = 0xcb0c16
+      const playerColour = 0xdec200
+      const opponentColour = 0x0c6be8
 
       // each rods football players
         const football_players = {
@@ -121,12 +121,12 @@ function FoosballTable() {
           },
           4: {
             type: '4-players',
-            positions: [3, 8, 14, 19],
+            positions: [3, 8.33, 13.67, 19],
             colour: playerColour
           },
           5: {
             type: '4-players',
-            positions: [3, 8, 14, 19],
+            positions: [3, 8.33, 13.67, 19],
             colour: opponentColour
           },
           6: {
@@ -385,27 +385,29 @@ function FoosballTable() {
           //   console.log(`[PACKET_COUNT] ${data.sequenceNum}`)
           // }
 
-          const normalizedX = Phaser.Math.Clamp(data.x / 640, 0, 1)
-          const normalizedY = Phaser.Math.Clamp(data.y / 480, 0, 1)
-          const mappedNormX = ballFieldBounds.left + normalizedX * (ballFieldBounds.right - ballFieldBounds.left)
-          const mappedNormY = ballFieldBounds.top + normalizedY * (ballFieldBounds.bottom - ballFieldBounds.top)
-          const tableX = tableLeftEdge + mappedNormX * tableWidth
-          const tableY = tableTopEdge + mappedNormY * tableHeight
+          // const normalizedX = Phaser.Math.Clamp(data.x / 640, 0, 1)
+          // const normalizedY = Phaser.Math.Clamp(data.y / 480, 0, 1)
+          // const mappedNormX = ballFieldBounds.left + normalizedX * (ballFieldBounds.right - ballFieldBounds.left)
+          // const mappedNormY = ballFieldBounds.top + normalizedY * (ballFieldBounds.bottom - ballFieldBounds.top)
+          const tableX = tableLeftEdge + ballRadius + data.x * (tableWidth - ballRadius * 2)
+          const tableY = tableTopEdge + ballRadius + (1.0 - data.y) * (tableHeight - ballRadius * 2)
 
           // DO NOT REMOVE! uncomment for BALL_POSITION_CONSISTENCY test
           // console.log(`[BALL_POSITION_CONSISTENCY] x=${data.x.toFixed(2)}, y=${data.y.toFixed(2)}`)
 
           // Clamp to keep ball within table bounds
-          const minX = tableLeftEdge + ballRadius + ballFieldBounds.left * tableWidth
-          const maxX = tableLeftEdge - ballRadius + ballFieldBounds.right * tableWidth
-          const minY = tableTopEdge + ballRadius + ballFieldBounds.top * tableHeight
-          const maxY = tableTopEdge - ballRadius + ballFieldBounds.bottom * tableHeight
-          const clampedX = Phaser.Math.Clamp(tableX, minX, maxX)
-          const clampedY = Phaser.Math.Clamp(tableY, minY, maxY)
+          // const minX = tableLeftEdge + ballRadius + ballFieldBounds.left * tableWidth
+          // const maxX = tableLeftEdge - ballRadius + ballFieldBounds.right * tableWidth
+          // const minY = tableTopEdge + ballRadius + ballFieldBounds.top * tableHeight
+          // const maxY = tableTopEdge - ballRadius + ballFieldBounds.bottom * tableHeight
+          // const clampedX = Phaser.Math.Clamp(tableX, minX, maxX)
+          // const clampedY = Phaser.Math.Clamp(tableY, minY, maxY)
           if (this.ball) {
-            this.ball.x = clampedX
-            this.ball.y = clampedY
+            this.ball.x = tableX
+            this.ball.y = tableY
           }
+          console.log(tableX);
+          console.log(tableY);
 
           // Record latency if timestamp and testId present (for testing)
           if (data.timestamp !== undefined && data.testId !== undefined) {
@@ -484,7 +486,7 @@ function FoosballTable() {
 
       // left trigger
       if (leftCharging && !this.leftChargeLocked && ltValue !== this.prevLT) {
-        if (leftRod) chargeRod(this, leftRod.elements.filter(el=>el.originalWidth), ltValue)
+        if (leftRod) chargeRod(this, leftRod, leftRod.elements.filter(el=>el.originalWidth), ltValue)
       }
 
       if (!leftCharging) {
@@ -492,13 +494,13 @@ function FoosballTable() {
 
         if (leftRod) {
           const players = leftRod.elements.filter(el => el.originalWidth)
-          releaseCharge(players)
+          releaseCharge(leftRod, players, false)
         }
       }
 
       // right trigger
       if (rightCharging && !this.rightChargeLocked && rtValue !== this.prevRT) {
-        if (rightRod) chargeRod(this, rightRod.elements.filter(el=>el.originalWidth), rtValue)
+        if (rightRod) chargeRod(this, rightRod, rightRod.elements.filter(el=>el.originalWidth), rtValue)
       }
 
       if (!rightCharging) {
@@ -506,7 +508,7 @@ function FoosballTable() {
 
         if (rightRod) {
           const players = rightRod.elements.filter(el => el.originalWidth)
-          releaseCharge(players)
+          releaseCharge(rightRod, players, false)
         }
       }
 
@@ -515,7 +517,7 @@ function FoosballTable() {
         if (leftRod && leftCharging) {
           const players = leftRod.elements.filter(el=>el.originalWidth)
 
-          releaseCharge(players)
+          releaseCharge(leftRod, players, true)
           kickRod(this, players, 2, "right", leftRod.rodId)
 
           this.leftChargeLocked = true
@@ -524,7 +526,7 @@ function FoosballTable() {
         if (rightRod && rightCharging) {
           const players = rightRod.elements.filter(el=>el.originalWidth)
 
-          releaseCharge(players)
+          releaseCharge(rightRod, players, true)
           kickRod(this, players, 2, "right", rightRod.rodId)
 
           this.rightChargeLocked = true
