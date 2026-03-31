@@ -147,6 +147,31 @@ export function moveRod(rodData, delta) {
   }
 }
 
+export function setRodPosition(rodData, normalizedPosition) {
+  const { hitbox, elements, offsets, tableTopEdge, tableBottomEdge } = rodData
+
+  const players = elements.filter(el => el.displayHeight && el.displayHeight < 50)
+  const isGoalkeeper = players.length === 1
+
+  const topPlayerY = Math.min(...players.map(el => el.y))                               
+  const bottomPlayerY = Math.max(...players.map(el => el.y))
+
+  const topDistance = hitbox.y - topPlayerY
+  const bottomDistance = bottomPlayerY - hitbox.y
+
+  const padding = isGoalkeeper ? (tableBottomEdge - tableTopEdge) * 0.412 : (players[0].displayHeight / 2)
+
+  const minY = tableTopEdge + topDistance + padding
+  const maxY = tableBottomEdge - bottomDistance - padding
+
+  console.log('minY:', minY, 'maxY:', maxY, 'targetY:', minY + normalizedPosition * (maxY - minY))
+  hitbox.y = minY + normalizedPosition * (maxY - minY)
+
+  elements.forEach((element, index) => {
+    element.y = hitbox.y + offsets[index]
+  })
+}
+
 export function chargeRod(scene, rodData, players, triggerValue) {
 
   const maxWidthMultiplier = 1.3

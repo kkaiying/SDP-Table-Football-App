@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import Phaser from 'phaser'
 import './FoosballTable.css'
-import { rodSliding, switchMode, setRodHighlight, kickRod, moveRod, chargeRod, releaseCharge} from './foosballControls'
+import { rodSliding, switchMode, setRodHighlight, kickRod, moveRod, chargeRod, releaseCharge, setRodPosition} from './foosballControls'
 import { addMessageListener, connectToServer } from '../utils/websocket'
 import { useKeybinds } from './KeybindContext'
 
@@ -67,6 +67,7 @@ function FoosballTable() {
       const tableRightEdge = tableCenterX + tableWidth / 2
       const tableTopEdge = tableCenterY - tableHeight / 2
       const tableBottomEdge = tableCenterY + tableHeight / 2
+      const pixelsPerCmH = tableHeight / 48.5
       // Tune these bounds if camera/table framing is slightly offset.
       // Values are normalized within the logical 640x480 feed mapped to the table.
       const ballFieldBounds = {
@@ -79,7 +80,10 @@ function FoosballTable() {
       const betweenCanvasAndTableTop = (canvasTop + tableTopEdge) / 2
       const betweenCanvasAndTableBottom = (canvasHeight + tableBottomEdge) / 2
       const numOfRods = 8
-      const rodSpacing = tableWidth / (numOfRods+1)
+      // const rodSpacing = tableWidth / (numOfRods+1)
+      const pixelsPerCm = tableWidth / 81
+      const goalKeeperOffset = 7.5 * pixelsPerCm
+      const rodSpacing = 9.5 * pixelsPerCm
       const playerRods = [1,2,4,6]
       const handleWidth = 30
       const ballRadius = tableWidth * 0.015
@@ -100,47 +104,55 @@ function FoosballTable() {
       const ballColour = 0xf0eceb
       const handleColour = 0x000000
       const playerColour = 0xdec200
-      const opponentColour = 0x0c6be8
+      const opponentColour = 0x1054e5
+      const bumperColour = 0x000000
 
       // each rods football players
         const football_players = {
           1: {
             type: 'goalkeeper',
-            positions: [11],
+            playerOffsets: [0],
             colour: playerColour,
           },
           2: {
             type: '3-players',
+            playerOffsets: [-15, 0, 15],
             positions: [3, 11, 19],
             colour: playerColour
           },
           3: {
             type: '3-players',
+            playerOffsets: [-15, 0, 15],
             positions: [3, 11, 19],
             colour: opponentColour
           },
           4: {
             type: '4-players',
+            playerOffsets: [-15.3, -5.1, 5.1, 15.3],
             positions: [3, 8.33, 13.67, 19],
             colour: playerColour
           },
           5: {
             type: '4-players',
+            playerOffsets: [-15.3, -5.1, 5.1, 15.3],
             positions: [3, 8.33, 13.67, 19],
             colour: opponentColour
           },
           6: {
             type: '3-players',
+            playerOffsets: [-15, 0, 15],
             positions: [3, 11, 19],
             colour: playerColour
           },
           7: {
             type: '3-players',
+            playerOffsets: [-15, 0, 15],
             positions: [3, 11, 19],
             colour: opponentColour
           },
           8: {
             type: 'goalkeeper',
+            playerOffsets: [0],
             positions: [11],
             colour: opponentColour
           },
@@ -204,21 +216,22 @@ function FoosballTable() {
 
       // make the rods
       for (let i = 1; i <= numOfRods; i++) {
-        const rodX = tableLeftEdge + rodSpacing * i
-        const rodTopY = betweenCanvasAndTableTop
-        const rodBottomY = betweenCanvasAndTableBottom
+        const rodX = tableLeftEdge + goalKeeperOffset + rodSpacing * (i - 1)
+        const rodTopY = betweenCanvasAndTableTop - 100
+        const rodBottomY = betweenCanvasAndTableBottom + 100
         const rod = this.add.line(0,0, rodX, rodTopY, rodX, rodBottomY, 0xffffff)
                       .setLineWidth(3).setOrigin(0,0)
         
         // make the handles
         let handle
+        const handleOffset = 150
         if (playerRods.includes(i)) {
           const handleHeight = canvasHeight - betweenCanvasAndTableBottom
-          const handleCenterY = (betweenCanvasAndTableBottom + canvasHeight) / 2
+          const handleCenterY = (betweenCanvasAndTableBottom + canvasHeight + handleOffset) / 2
           handle = this.add.rectangle(rodX, handleCenterY, handleWidth, handleHeight, handleColour)
         } else {
           const handleHeight = betweenCanvasAndTableTop - canvasTop
-          const handleCenterY = (canvasTop + betweenCanvasAndTableTop) / 2
+          const handleCenterY = ((canvasTop - handleOffset) + betweenCanvasAndTableTop) / 2
           handle = this.add.rectangle(rodX, handleCenterY, handleWidth, handleHeight, handleColour)
         }
 
@@ -230,8 +243,8 @@ function FoosballTable() {
         const playerConfig = football_players[i]
         const playerObjects = []
 
-        playerConfig.positions.forEach(boxNum => {
-          const playerCenterY = tableTopEdge + boxHeight * (boxNum - 0.5)
+        playerConfig.playerOffsets.forEach(offsetCm => {
+          const playerCenterY = tableCenterY + offsetCm * pixelsPerCmH
           const player = this.add.rectangle(rodX, playerCenterY, playerWidth, playerHeight, playerConfig.colour)
           player.originalWidth = playerWidth
           player.originalHeight = playerHeight
@@ -244,6 +257,15 @@ function FoosballTable() {
           player.kickTween = null
           playerObjects.push(player)
         })
+
+        if (playerConfig.type === 'goalkeeper') {                                               
+          const bumperOffsets = [-16, 16]
+          bumperOffsets.forEach(offsetCm => {                                                   
+            const bumperCenterY = tableCenterY + offsetCm * pixelsPerCmH
+            const bumper = this.add.rectangle(rodX, bumperCenterY, playerWidth, playerHeight, bumperColour)                                                                           
+            playerObjects.push(bumper)
+          })                                                                                    
+        }  
 
         const rodElements = [rod, handle, ...playerObjects]
 
@@ -269,7 +291,12 @@ function FoosballTable() {
         if (i===6) {
           this.attackRod = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
           this.rodMap[4] = this.attackRod
-        } 
+        }
+        // opponent rods
+        if (i===3) this.rodMap['opp_striker'] = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
+        if (i===5) this.rodMap['opp_midfield'] = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
+        if (i===7) this.rodMap['opp_defence'] = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
+        if (i===8) this.rodMap['opp_gk'] = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
       }
 
       // left goal
@@ -380,28 +407,9 @@ function FoosballTable() {
           }
           this.lastBallUpdateTime = currentTime
 
-          // DO NOT REMOVE! uncomment for PACKET_COUNT test
-          // if (data.sequenceNum !== undefined) {
-          //   console.log(`[PACKET_COUNT] ${data.sequenceNum}`)
-          // }
-
-          // const normalizedX = Phaser.Math.Clamp(data.x / 640, 0, 1)
-          // const normalizedY = Phaser.Math.Clamp(data.y / 480, 0, 1)
-          // const mappedNormX = ballFieldBounds.left + normalizedX * (ballFieldBounds.right - ballFieldBounds.left)
-          // const mappedNormY = ballFieldBounds.top + normalizedY * (ballFieldBounds.bottom - ballFieldBounds.top)
           const tableX = tableLeftEdge + ballRadius + data.x * (tableWidth - ballRadius * 2)
           const tableY = tableTopEdge + ballRadius + (1.0 - data.y) * (tableHeight - ballRadius * 2)
 
-          // DO NOT REMOVE! uncomment for BALL_POSITION_CONSISTENCY test
-          // console.log(`[BALL_POSITION_CONSISTENCY] x=${data.x.toFixed(2)}, y=${data.y.toFixed(2)}`)
-
-          // Clamp to keep ball within table bounds
-          // const minX = tableLeftEdge + ballRadius + ballFieldBounds.left * tableWidth
-          // const maxX = tableLeftEdge - ballRadius + ballFieldBounds.right * tableWidth
-          // const minY = tableTopEdge + ballRadius + ballFieldBounds.top * tableHeight
-          // const maxY = tableTopEdge - ballRadius + ballFieldBounds.bottom * tableHeight
-          // const clampedX = Phaser.Math.Clamp(tableX, minX, maxX)
-          // const clampedY = Phaser.Math.Clamp(tableY, minY, maxY)
           if (this.ball) {
             this.ball.x = tableX
             this.ball.y = tableY
@@ -409,13 +417,10 @@ function FoosballTable() {
           console.log(tableX);
           console.log(tableY);
 
-          // Record latency if timestamp and testId present (for testing)
           if (data.timestamp !== undefined && data.testId !== undefined) {
             const receiveTime = Date.now()
             const latency = receiveTime - data.timestamp
-            console.log(`[BALL_MOVEMENT_LATENCY] ${latency.toFixed(2)}ms`)
 
-            // Send latency back via WebSocket
             if (ws && ws.readyState === WebSocket.OPEN) {
               ws.send(JSON.stringify({
                 type: 'latency_result',
@@ -427,6 +432,19 @@ function FoosballTable() {
         } else if (data.type === 'ball_status') {
           this.lastBallSignalTime = performance.now()
           this.applyBallStatus(data.status || 'lost')
+        } else if (data.type === 'opponent_positions') {
+          console.log(data)
+          const oppRodMap = { opp_gk: 'opp_gk', opp_defence: 'opp_defence', opp_midfield: 'opp_midfield', opp_striker: 'opp_striker' } 
+          console.log(Object.entries(oppRodMap))
+          for (const [key, rodIndex] of Object.entries(oppRodMap)) {
+            if (data[key] !== undefined) {
+              const rod = this.rodMap[rodIndex]
+              console.log(rodIndex, rod, data[key])
+              if (rod) {
+                setRodPosition(rod, data[key])
+              }
+            }
+          }
         }
       }
     }

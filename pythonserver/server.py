@@ -182,5 +182,12 @@ if __name__ == "__main__":
             "coasting": False,
             "detected": True,
         })
+        opp_positions = {}                                                                  
+        for key in ["opp_gk", "opp_defence", "opp_midfield", "opp_striker"]:
+            val = local_redis.get(key + "_position")
+            if val is not None:
+                opp_positions[key] = float(val)
+        if opp_positions:
+            on_tracker_message({"type": "opponent_positions", **opp_positions})
         sequence_num += 1
         time.sleep(0.033)
