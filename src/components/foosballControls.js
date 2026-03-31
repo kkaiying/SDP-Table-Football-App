@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { sendKickCommand, sendSlideCommand } from '../utils/websocket'
+import { sendChargeCommand, sendKickCommand, sendSlideCommand } from '../utils/websocket'
 
 export function rodSliding(scene, rodHitbox, rodElements, constraints) {
     const { tableTopEdge, tableBottomEdge, playerHeight, rodId } = constraints
@@ -93,6 +93,8 @@ export function kickRod(scene, players, level = 1, direction = 'right', rodId) {
   const power = powerByLevel[level] || powerByLevel[1]
   const kickSign = 1
 
+  sendKickCommand(rodId, level, direction)
+
   players.forEach(player => {
     if (player.isKicking) return
     player.isKicking = true
@@ -100,8 +102,6 @@ export function kickRod(scene, players, level = 1, direction = 'right', rodId) {
       player.chargeTween.stop()
       player.chargeTween = null
     }
-
-    //sendKickCommand(rodId, level, direction)
 
     player.kickTween = scene.tweens.add({
       targets: player, // rectangle animated
@@ -158,17 +158,49 @@ export function moveRod(rodData, delta) {
   }
 }
 
-export function chargeRod(scene, players, triggerValue) {
+export function setRodPosition(rodData, normalizedPosition) {
+  const { hitbox, elements, offsets, tableTopEdge, tableBottomEdge } = rodData
+
+  const players = elements.filter(el => el.displayHeight && el.displayHeight < 50)
+  const isGoalkeeper = players.length === 1
+
+  const topPlayerY = Math.min(...players.map(el => el.y))                               
+  const bottomPlayerY = Math.max(...players.map(el => el.y))
+
+  const topDistance = hitbox.y - topPlayerY
+  const bottomDistance = bottomPlayerY - hitbox.y
+
+  const padding = isGoalkeeper ? (tableBottomEdge - tableTopEdge) * 0.412 : (players[0].displayHeight / 2)
+
+  const minY = tableTopEdge + topDistance + padding
+  const maxY = tableBottomEdge - bottomDistance - padding
+
+  console.log('minY:', minY, 'maxY:', maxY, 'targetY:', minY + normalizedPosition * (maxY - minY))
+  hitbox.y = minY + normalizedPosition * (maxY - minY)
+
+  elements.forEach((element, index) => {
+    element.y = hitbox.y + offsets[index]
+  })
+}
+
+export function chargeRod(scene, rodData, players, triggerValue) {
 
   const maxWidthMultiplier = 1.3
   const smoothSpeed = 0.1
 
+  let changed = true;
+
   players.forEach(player => {
+    if (player.isCharging)
+      changed = false;
 
     if (player.isKicking) return   // already exists
 
     const raw = Phaser.Math.Clamp(triggerValue, 0, 1)
     const strength = raw * raw
+
+    if (strength <= 0)
+      console.log(strength);
 
     const targetWidth =
       player.originalHeight *
@@ -187,13 +219,19 @@ export function chargeRod(scene, players, triggerValue) {
 
     player.isCharging = strength > 0
   })
+
+  if (changed)
+    sendChargeCommand(rodData.rodId, true);
 }
 
-export function releaseCharge(players) {
-
+export function releaseCharge(rodData, players, kicked) {
+  let changed = true;
   players.forEach(player => {
+    if (!player.isCharging)
+      changed = false;
 
-    if (player.isKicking) return
+    if (player.isKicking) 
+      return;
 
     if (player.chargeTween) {
       player.chargeTween.stop()
@@ -203,6 +241,8 @@ export function releaseCharge(players) {
     player.x = player.homeX
     player.displayWidth = player.originalWidth
     player.isCharging = false
-
   })
+
+  if (changed && !kicked) 
+    sendChargeCommand(rodData.rodId, false)
 }

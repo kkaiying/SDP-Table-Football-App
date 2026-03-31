@@ -1,23 +1,24 @@
 import { useEffect } from 'react'
 import Phaser from 'phaser'
 import './FoosballTable.css'
-import { rodSliding, switchMode, setRodHighlight, kickRod, moveRod, chargeRod, releaseCharge} from './foosballControls'
-import { connectToServer } from '../utils/websocket'
+import { rodSliding, switchMode, setRodHighlight, kickRod, moveRod, chargeRod, releaseCharge, setRodPosition} from './foosballControls'
+import { addMessageListener, connectToServer } from '../utils/websocket'
 import { useKeybinds } from './KeybindContext'
 
 function FoosballTable() {
   const { keybinds } = useKeybinds()
+
   useEffect(() => {
     const ws = connectToServer()
     let ballUpdateHandler = null
-    ws.onmessage = (event) => {
+    const unsubscribeMessage = addMessageListener((event) => {
       try {
         const data = JSON.parse(event.data)
         if (ballUpdateHandler) ballUpdateHandler(data)
       } catch (err) {
         console.error('Ball position error:', err)
       }
-    }
+    })
     const config = {
       type: Phaser.AUTO,
       width: '100%',
@@ -66,14 +67,26 @@ function FoosballTable() {
       const tableRightEdge = tableCenterX + tableWidth / 2
       const tableTopEdge = tableCenterY - tableHeight / 2
       const tableBottomEdge = tableCenterY + tableHeight / 2
+      const pixelsPerCmH = tableHeight / 48.5
+      // Tune these bounds if camera/table framing is slightly offset.
+      // Values are normalized within the logical 640x480 feed mapped to the table.
+      const ballFieldBounds = {
+        left: 0.03,
+        right: 0.97,
+        top: 0.04,
+        bottom: 0.96
+      }
       const canvasTop = 0
       const betweenCanvasAndTableTop = (canvasTop + tableTopEdge) / 2
       const betweenCanvasAndTableBottom = (canvasHeight + tableBottomEdge) / 2
       const numOfRods = 8
-      const rodSpacing = tableWidth / (numOfRods+1)
+      // const rodSpacing = tableWidth / (numOfRods+1)
+      const pixelsPerCm = tableWidth / 81
+      const goalKeeperOffset = 7.5 * pixelsPerCm
+      const rodSpacing = 9.5 * pixelsPerCm
       const playerRods = [1,2,4,6]
       const handleWidth = 30
-      const ballRadius = tableWidth * 0.02
+      const ballRadius = tableWidth * 0.015
       const circleMarkerRadius = rodSpacing
 
       // goal markings
@@ -90,48 +103,56 @@ function FoosballTable() {
       const tableMarkings = 0xffffff
       const ballColour = 0xf0eceb
       const handleColour = 0x000000
-      const playerColour = 0xebf527
-      const opponentColour = 0x1da3f2
+      const playerColour = 0xdec200
+      const opponentColour = 0x1054e5
+      const bumperColour = 0x000000
 
       // each rods football players
         const football_players = {
           1: {
             type: 'goalkeeper',
-            positions: [11],
+            playerOffsets: [0],
             colour: playerColour,
           },
           2: {
             type: '3-players',
+            playerOffsets: [-15, 0, 15],
             positions: [3, 11, 19],
             colour: playerColour
           },
           3: {
             type: '3-players',
+            playerOffsets: [-15, 0, 15],
             positions: [3, 11, 19],
             colour: opponentColour
           },
           4: {
             type: '4-players',
-            positions: [3, 8, 14, 19],
+            playerOffsets: [-15.3, -5.1, 5.1, 15.3],
+            positions: [3, 8.33, 13.67, 19],
             colour: playerColour
           },
           5: {
             type: '4-players',
-            positions: [3, 8, 14, 19],
+            playerOffsets: [-15.3, -5.1, 5.1, 15.3],
+            positions: [3, 8.33, 13.67, 19],
             colour: opponentColour
           },
           6: {
             type: '3-players',
+            playerOffsets: [-15, 0, 15],
             positions: [3, 11, 19],
             colour: playerColour
           },
           7: {
             type: '3-players',
+            playerOffsets: [-15, 0, 15],
             positions: [3, 11, 19],
             colour: opponentColour
           },
           8: {
             type: 'goalkeeper',
+            playerOffsets: [0],
             positions: [11],
             colour: opponentColour
           },
@@ -176,24 +197,41 @@ function FoosballTable() {
 
       // ball
       this.ball = this.add.circle(tableCenterX, tableCenterY, ballRadius, ballColour)
+      this.ballStatusText = this.add.text(tableLeftEdge, tableTopEdge - 28, 'Ball: Lost', {
+        fontFamily: 'Arial',
+        fontSize: '16px',
+        color: '#ffffff',
+        stroke: '#000000',
+        strokeThickness: 4
+      }).setDepth(10)
+      this.wsDebugText = this.add.text(tableLeftEdge, tableBottomEdge + 8, 'WS: waiting...', {
+        fontFamily: 'Arial',
+        fontSize: '13px',
+        color: '#ffffff',
+        stroke: '#000000',
+        strokeThickness: 3
+      }).setDepth(10)
+      this.wsMessageCount = 0
+      this.lastWsMessageTime = performance.now()
 
       // make the rods
       for (let i = 1; i <= numOfRods; i++) {
-        const rodX = tableLeftEdge + rodSpacing * i
-        const rodTopY = betweenCanvasAndTableTop
-        const rodBottomY = betweenCanvasAndTableBottom
+        const rodX = tableLeftEdge + goalKeeperOffset + rodSpacing * (i - 1)
+        const rodTopY = betweenCanvasAndTableTop - 100
+        const rodBottomY = betweenCanvasAndTableBottom + 100
         const rod = this.add.line(0,0, rodX, rodTopY, rodX, rodBottomY, 0xffffff)
                       .setLineWidth(3).setOrigin(0,0)
         
         // make the handles
         let handle
+        const handleOffset = 150
         if (playerRods.includes(i)) {
           const handleHeight = canvasHeight - betweenCanvasAndTableBottom
-          const handleCenterY = (betweenCanvasAndTableBottom + canvasHeight) / 2
+          const handleCenterY = (betweenCanvasAndTableBottom + canvasHeight + handleOffset) / 2
           handle = this.add.rectangle(rodX, handleCenterY, handleWidth, handleHeight, handleColour)
         } else {
           const handleHeight = betweenCanvasAndTableTop - canvasTop
-          const handleCenterY = (canvasTop + betweenCanvasAndTableTop) / 2
+          const handleCenterY = ((canvasTop - handleOffset) + betweenCanvasAndTableTop) / 2
           handle = this.add.rectangle(rodX, handleCenterY, handleWidth, handleHeight, handleColour)
         }
 
@@ -205,8 +243,8 @@ function FoosballTable() {
         const playerConfig = football_players[i]
         const playerObjects = []
 
-        playerConfig.positions.forEach(boxNum => {
-          const playerCenterY = tableTopEdge + boxHeight * (boxNum - 0.5)
+        playerConfig.playerOffsets.forEach(offsetCm => {
+          const playerCenterY = tableCenterY + offsetCm * pixelsPerCmH
           const player = this.add.rectangle(rodX, playerCenterY, playerWidth, playerHeight, playerConfig.colour)
           player.originalWidth = playerWidth
           player.originalHeight = playerHeight
@@ -219,6 +257,15 @@ function FoosballTable() {
           player.kickTween = null
           playerObjects.push(player)
         })
+
+        if (playerConfig.type === 'goalkeeper') {                                               
+          const bumperOffsets = [-16, 16]
+          bumperOffsets.forEach(offsetCm => {                                                   
+            const bumperCenterY = tableCenterY + offsetCm * pixelsPerCmH
+            const bumper = this.add.rectangle(rodX, bumperCenterY, playerWidth, playerHeight, bumperColour)                                                                           
+            playerObjects.push(bumper)
+          })                                                                                    
+        }  
 
         const rodElements = [rod, handle, ...playerObjects]
 
@@ -244,7 +291,12 @@ function FoosballTable() {
         if (i===6) {
           this.attackRod = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
           this.rodMap[4] = this.attackRod
-        } 
+        }
+        // opponent rods
+        if (i===3) this.rodMap['opp_striker'] = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
+        if (i===5) this.rodMap['opp_midfield'] = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
+        if (i===7) this.rodMap['opp_defence'] = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
+        if (i===8) this.rodMap['opp_gk'] = { rodId:i, hitbox: rodHitbox, elements: rodElements, offsets, tableTopEdge, tableBottomEdge }
       }
 
       // left goal
@@ -317,9 +369,35 @@ function FoosballTable() {
 
       // Track ball update timing
       this.lastBallUpdateTime = null
+      this.lastBallSignalTime = performance.now()
+
+      this.applyBallStatus = (status) => {
+        if (this.ballStatusText) {
+          if (status === 'tracked') this.ballStatusText.setText('Ball: Tracked')
+          else if (status === 'coasting') this.ballStatusText.setText('Ball: Coasting')
+          else this.ballStatusText.setText('Ball: Lost')
+        }
+
+        if (this.ball) {
+          if (status === 'tracked') this.ball.setFillStyle(ballColour)
+          else if (status === 'coasting') this.ball.setFillStyle(0xff9f1c)
+          else this.ball.setFillStyle(0x7d8597)
+        }
+      }
 
       ballUpdateHandler = (data) => {
+        this.wsMessageCount += 1
+        this.lastWsMessageTime = performance.now()
+        if (this.wsDebugText) {
+          const statusPart = data.status ? ` status=${data.status}` : ''
+          this.wsDebugText.setText(`WS msgs=${this.wsMessageCount} last=${data.type || 'unknown'}${statusPart}`)
+        }
+
         if (data.type === 'ball_position') {
+          this.lastBallSignalTime = performance.now()
+          const inferredStatus = data.status || (data.coasting ? 'coasting' : 'tracked')
+          this.applyBallStatus(inferredStatus)
+
           const currentTime = performance.now()
 
           // Log time between updates
@@ -329,44 +407,42 @@ function FoosballTable() {
           }
           this.lastBallUpdateTime = currentTime
 
-          // DO NOT REMOVE! uncomment for PACKET_COUNT test
-          // if (data.sequenceNum !== undefined) {
-          //   console.log(`[PACKET_COUNT] ${data.sequenceNum}`)
-          // }
-
-          const tableX = tableLeftEdge + (data.x / 640) * tableWidth
-          const tableY = tableTopEdge + (data.y / 480) * tableHeight
-
-          // DO NOT REMOVE! uncomment for BALL_POSITION_CONSISTENCY test
-          // console.log(`[BALL_POSITION_CONSISTENCY] x=${data.x.toFixed(2)}, y=${data.y.toFixed(2)}`)
-
-          // Clamp to keep ball within table bounds 
-          const clampedX = Phaser.Math.Clamp(tableX, tableLeftEdge + ballRadius, tableRightEdge - ballRadius)
-          const clampedY = Phaser.Math.Clamp(tableY, tableTopEdge + ballRadius, tableBottomEdge - ballRadius)
-          if (this.ball) {
-            this.ball.x = clampedX
-            this.ball.y = clampedY
-          }
-          //
+          const tableX = tableLeftEdge + ballRadius + data.x * (tableWidth - ballRadius * 2)
+          const tableY = tableTopEdge + ballRadius + (1.0 - data.y) * (tableHeight - ballRadius * 2)
 
           if (this.ball) {
             this.ball.x = tableX
             this.ball.y = tableY
           }
+          console.log(tableX);
+          console.log(tableY);
 
-          // Record latency if timestamp and testId present (for testing)
           if (data.timestamp !== undefined && data.testId !== undefined) {
             const receiveTime = Date.now()
             const latency = receiveTime - data.timestamp
-            console.log(`[BALL_MOVEMENT_LATENCY] ${latency.toFixed(2)}ms`)
 
-            // Send latency back via WebSocket
             if (ws && ws.readyState === WebSocket.OPEN) {
               ws.send(JSON.stringify({
                 type: 'latency_result',
                 testId: data.testId,
                 latency: latency
               }))
+            }
+          }
+        } else if (data.type === 'ball_status') {
+          this.lastBallSignalTime = performance.now()
+          this.applyBallStatus(data.status || 'lost')
+        } else if (data.type === 'opponent_positions') {
+          console.log(data)
+          const oppRodMap = { opp_gk: 'opp_gk', opp_defence: 'opp_defence', opp_midfield: 'opp_midfield', opp_striker: 'opp_striker' } 
+          console.log(Object.entries(oppRodMap))
+          for (const [key, rodIndex] of Object.entries(oppRodMap)) {
+            if (data[key] !== undefined) {
+              const rod = this.rodMap[rodIndex]
+              console.log(rodIndex, rod, data[key])
+              if (rod) {
+                setRodPosition(rod, data[key])
+              }
             }
           }
         }
@@ -428,7 +504,7 @@ function FoosballTable() {
 
       // left trigger
       if (leftCharging && !this.leftChargeLocked && ltValue !== this.prevLT) {
-        if (leftRod) chargeRod(this, leftRod.elements.filter(el=>el.originalWidth), ltValue)
+        if (leftRod) chargeRod(this, leftRod, leftRod.elements.filter(el=>el.originalWidth), ltValue)
       }
 
       if (!leftCharging) {
@@ -436,13 +512,13 @@ function FoosballTable() {
 
         if (leftRod) {
           const players = leftRod.elements.filter(el => el.originalWidth)
-          releaseCharge(players)
+          releaseCharge(leftRod, players, false)
         }
       }
 
       // right trigger
       if (rightCharging && !this.rightChargeLocked && rtValue !== this.prevRT) {
-        if (rightRod) chargeRod(this, rightRod.elements.filter(el=>el.originalWidth), rtValue)
+        if (rightRod) chargeRod(this, rightRod, rightRod.elements.filter(el=>el.originalWidth), rtValue)
       }
 
       if (!rightCharging) {
@@ -450,7 +526,7 @@ function FoosballTable() {
 
         if (rightRod) {
           const players = rightRod.elements.filter(el => el.originalWidth)
-          releaseCharge(players)
+          releaseCharge(rightRod, players, false)
         }
       }
 
@@ -459,7 +535,7 @@ function FoosballTable() {
         if (leftRod && leftCharging) {
           const players = leftRod.elements.filter(el=>el.originalWidth)
 
-          releaseCharge(players)
+          releaseCharge(leftRod, players, true)
           kickRod(this, players, 2, "right", leftRod.rodId)
 
           this.leftChargeLocked = true
@@ -468,7 +544,7 @@ function FoosballTable() {
         if (rightRod && rightCharging) {
           const players = rightRod.elements.filter(el=>el.originalWidth)
 
-          releaseCharge(players)
+          releaseCharge(rightRod, players, true)
           kickRod(this, players, 2, "right", rightRod.rodId)
 
           this.rightChargeLocked = true
@@ -494,13 +570,21 @@ function FoosballTable() {
       this.prevRT = rtValue
       this.prevDpadLeft = dpadLeft
       this.prevDpadRight = dpadRight
+
+      if (performance.now() - this.lastBallSignalTime > 700) {
+        this.applyBallStatus('lost')
+      }
+
+      if (this.wsDebugText && performance.now() - this.lastWsMessageTime > 1500) {
+        this.wsDebugText.setText(`WS msgs=${this.wsMessageCount} idle`)
+      }
     }
 
     const game = new Phaser.Game(config)
 
     return () => {
+      unsubscribeMessage()
       game.destroy(true)
-      if (ws) ws.close()
     }
   }, [keybinds])
 

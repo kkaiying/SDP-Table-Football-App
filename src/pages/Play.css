@@ -14,15 +14,15 @@
 .opponent {
   position: absolute;
   top: 2vh;
-  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
   gap: 2vw; 
   z-index: 1000;
   font-size: 2vw;
-  background-color: var(--red);
-  padding: 1vh 7vw 1vh 2vw;
-  clip-path: polygon(0 0, 80% 0, 100% 100%, 0 100%);
+  background-color: #1054e5;
+  padding: 1vh 2vw 1vh 5vw;
+  clip-path: polygon(20% 0, 100% 0, 100% 100%, 0 100%);
 }
 
 .opponent p {
@@ -36,15 +36,15 @@
 .you {
   position: absolute;
   top: 2vh;
-  right: 0;
+  left: 0;
   display: flex;
   align-items: center;
   gap: 2vw;
   z-index: 1000;
   font-size: 2vw;
-  background-color: var(--yellow);
-  padding: 1vh 2vw 1vh 5vw;
-  clip-path: polygon(20% 0, 100% 0, 100% 100%, 0 100%);
+  background-color: #dec200;
+  padding: 1vh 7vw 1vh 2vw;
+  clip-path: polygon(0 0, 80% 0, 100% 100%, 0 100%);
 }
 
 .you p {
